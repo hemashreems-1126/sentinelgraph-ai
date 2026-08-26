@@ -17,60 +17,28 @@
 
 ---
 
-## 🚀 Quickstart — Run Locally in 10 Seconds
+## 🚀 How to Run in VS Code (Zero Docker Required)
 
-### Option 1: 1-Click Startup Scripts (Recommended — Zero Setup)
+If you are a recruiter, reviewer, or developer reviewing this project in **Visual Studio Code**, you do **NOT** need Docker, external databases, or paid API keys. Everything runs out of the box with zero setup!
 
-#### On Windows:
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/hemashreems-1126/sentinelgraph-ai.git
-   cd sentinelgraph-ai
-   ```
-2. Double-click or run from terminal:
-   - **`.\run_backend.bat`** *(Starts FastAPI Backend on `http://localhost:8000`)*
-   - **`.\run_frontend.bat`** *(Starts React Frontend on `http://localhost:3000`)*
+### Step-by-Step in VS Code:
 
-#### On macOS / Linux:
-```bash
-git clone https://github.com/hemashreems-1126/sentinelgraph-ai.git
-cd sentinelgraph-ai
-chmod +x run_backend.sh run_frontend.sh
-./run_backend.sh &
-./run_frontend.sh
-```
+1. **Open the Project in VS Code**:
+   - `File` $\to$ `Open Folder...` $\to$ select the cloned `sentinelgraph-ai` directory.
 
-👉 **Open in your browser**:
-- **Interactive Visual Dashboard**: **[http://localhost:3000](http://localhost:3000)**
-- **Interactive Backend Swagger Docs**: **[http://localhost:8000/docs](http://localhost:8000/docs)**
+2. **Launch the Backend & Frontend**:
+   - **On Windows**:
+     - In VS Code Terminal 1: run `.\run_backend.bat`
+     - In VS Code Terminal 2: run `.\run_frontend.bat`
+   - **On macOS / Linux**:
+     - In VS Code Terminal 1: run `./run_backend.sh`
+     - In VS Code Terminal 2: run `./run_frontend.sh`
 
----
+   *(Or press `Ctrl + Shift + B` in VS Code to run the automated VS Code Build Task that starts both automatically).*
 
-### Option 2: Universal Docker Compose (All-in-One)
-
-```bash
-docker compose up --build
-```
-- Frontend UI: `http://localhost:3000`
-- Backend API Docs: `http://localhost:8000/docs`
-
----
-
-### Option 3: Manual Terminal Commands
-
-#### 1. Backend (FastAPI + LangGraph)
-```bash
-cd backend
-pip install -r requirements.txt
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-#### 2. Frontend (React + Vite + Tailwind)
-```bash
-cd frontend
-npm install
-npm run dev
-```
+3. **Open in Your Browser**:
+   - 🌐 **Interactive Web Dashboard**: **[http://localhost:3000](http://localhost:3000)**
+   - 📑 **Interactive Backend OpenAPI Docs**: **[http://localhost:8000/docs](http://localhost:8000/docs)**
 
 ---
 
@@ -86,6 +54,18 @@ npm run dev
    - **Investigator Override**: Test submitting a human compliance sign-off override.
 4. **Audit Trail**: Inspect the cryptographic **SHA-256 immutable logs** recorded for each agent action.
 5. **Model Evaluation**: View live precision, recall ($100\%$), ROC-AUC ($0.9917$), and empirical confusion matrix.
+
+---
+
+## 🐳 Alternative Run Option: Docker Compose
+
+If you have Docker and prefer a single containerized command:
+
+```bash
+docker compose up --build
+```
+- Frontend: `http://localhost:3000`
+- Backend Docs: `http://localhost:8000/docs`
 
 ---
 
@@ -136,6 +116,9 @@ $$Score = 100 \times \min\left(1.0, \, 0.25 \cdot \frac{S_{\text{raw}}}{100} + 0
 
 ```
 sentinelgraph-ai/
+├── .vscode/                         # Native VS Code Tasks & Launch Configs
+│   ├── tasks.json                   # Press Ctrl+Shift+B to start all services
+│   └── launch.json                  # Native FastAPI Debugger configuration
 ├── run_backend.bat                  # 1-Click Windows Backend Launcher
 ├── run_frontend.bat                 # 1-Click Windows Frontend Launcher
 ├── run_backend.sh                   # 1-Click macOS/Linux Backend Launcher
