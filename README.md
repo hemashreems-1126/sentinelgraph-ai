@@ -1,94 +1,147 @@
-# SentinelGraph — Multi-Agent Financial Crime Alert Investigation Platform
+# 🛡️ SentinelGraph — Multi-Agent Financial Crime Alert Investigation Platform
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-FF6B6B.svg)](https://github.com/langchain-ai/langgraph)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%2B%20Python-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![LangGraph](https://img.shields.io/badge/Agentic%20Workflow-LangGraph-FF6B6B.svg)](https://github.com/langchain-ai/langgraph)
 [![Groq LLM](https://img.shields.io/badge/LLM-Groq%20(LLaMA--3.3)--F55036.svg)](https://groq.com)
 [![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite%20%2B%20Tailwind-61DAFB.svg?logo=react&logoColor=black)](https://react.dev)
-[![Docker](https://img.shields.io/badge/Deploy-Docker%20Compose%20%26%20Render-2496ED.svg?logo=docker&logoColor=white)](https://render.com)
-[![Tests](https://img.shields.io/badge/Tests-14%2F14%20Passing-10B981.svg)]()
+[![Tests](https://img.shields.io/badge/Automated%20Tests-14%2F14%20Passing-10B981.svg)]()
+[![Evaluation](https://img.shields.io/badge/Fraud%20Recall-100%25%20(ROC--AUC%200.9917)-10B981.svg)]()
 
-> **SentinelGraph** is an enterprise-grade agentic financial crime investigation platform engineered for the **Razorpay AI Buildathon 2026 ("AI Risk Manager" track)**. It automates the full AML/fraud triage and investigation lifecycle across **11 cohesive stages**: from synthetic financial graph simulation and dual anomaly detection (Rule + Isolation Forest) to a multi-agent LangGraph workflow featuring static/adaptive planning, hypothesis formulation, 6 specialized investigative sub-agents, **100% deterministic Python risk scoring**, immutable cryptographic audit logging (SHA-256), and FinCEN-compliant Suspicious Activity Report (SAR) drafting with an active investigator feedback loop.
+> **Built for the Razorpay AI Buildathon 2026 — "AI Risk Manager" Track**  
+> An autonomous, end-to-end multi-agent AI system that simulates, detects, triages, investigates, and drafts regulatory compliance reports for complex financial crime (AML/Fraud) with **100% deterministic mathematical risk scoring** and cryptographic audit trails.
 
 ---
 
-## Architecture Diagram
+## 📌 Problem Statement
+
+Traditional financial risk management and Anti-Money Laundering (AML) monitoring systems suffer from three critical industry bottlenecks:
+
+1. **Extreme Alert Fatigue & False Positives**: Over 95% of traditional rule-based alerts are false alarms, overwhelming compliance analysts and delaying action on actual financial crimes.
+2. **Fragmented & Manual Investigation**: Investigating a single suspect account requires a human analyst to manually piece together transaction ledgers, multi-hop counterparty network graphs, behavioral velocity shifts, and KYC identity documents.
+3. **LLM Hallucination & Compliance Risks**: Pure LLM-based decision systems cannot be audited, hallucinate risk numbers, and violate strict FinCEN/FIU regulatory governance standards.
+
+---
+
+## 💡 Our Solution: SentinelGraph
+
+**SentinelGraph** solves this by unifying **Machine Learning anomaly detection**, an **11-stage LangGraph multi-agent investigative workflow**, and **100% deterministic Python risk scoring** into a single cohesive platform:
+
+```
+┌─────────────────────────┐     ┌───────────────────────────────────┐     ┌───────────────────────────────────┐
+│   PHASE 1: DETECTION    │     │   PHASE 2: MULTI-AGENT ANALYSIS   │     │    PHASE 3: GOVERNANCE & SAR      │
+│                         │     │                                   │     │                                   │
+│ • AMLSim Data Simulator │     │ • Supervisor & Memory Layer       │     │ • Forensic Synthesis Reasoning    │
+│ • Rule + Isolation Forest ───▶│ • Static SOP / Adaptive Planner  ───▶│ • 100% Deterministic Risk Score   │
+│ • Priority Triage Queue │     │ • Competing Hypotheses Formulation│     │ • SHA-256 Cryptographic Audit Log │
+│                         │     │ • 6 Forensic Specialized Agents   │     │ • FinCEN SAR Draft + Human Review │
+└─────────────────────────┘     └───────────────────────────────────┘     └───────────────────────────────────┘
+```
+
+### Key Highlights:
+- **Dual Anomaly Engine**: Combines deterministic rule heuristics with scikit-learn's `IsolationForest` multidimensional anomaly detection.
+- **Multi-Agent LangGraph Pipeline**: 6 specialized subagents (Evidence Retrieval, NetworkX 2-Hop Graph Traversal, Behavioral Z-Scores, KYC Document Parsing, Mocked PEP/Sanctions screening, Case Assembly) orchestrated by a Supervisor with **conditional loop-backs** (max 2 iterations) for forensic uncertainty.
+- **Zero-Hallucination Risk Scoring**: The final risk score (0–100), risk band (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`), and decision (`ALLOW`, `REVIEW`, `BLOCK`) are computed by a **100% deterministic mathematical formula** — not generated by an LLM.
+- **FinCEN SAR Narrative Drafting**: Automatically drafts regulatory-compliant Suspicious Activity Reports labeled for human compliance officer review and sign-off.
+- **Tamper-Evident Auditing**: Every agent action, tool call, and decision is cryptographically hashed with SHA-256.
+
+---
+
+## 🖼️ Architecture Diagram
 
 ![SentinelGraph 11-Stage Architecture](docs/architecture_diagram.png)
 
 ---
 
-## 🚀 How to Run in VS Code (Zero Docker Required)
+## 🚀 How to Run (1-Click Startup — Zero Setup)
 
-If you are a recruiter, reviewer, or developer reviewing this project in **Visual Studio Code**, you do **NOT** need Docker, external databases, or paid API keys. Everything runs out of the box with zero setup!
+Whether you are a recruiter, reviewer, or developer, SentinelGraph is designed to run in **one click** with **zero configuration, zero paid API keys, and zero external database setup** (SQLite is built-in).
 
-### Step-by-Step in VS Code:
+### 🖥️ Option 1: 1-Click All-in-One Launcher (Recommended)
 
-1. **Open the Project in VS Code**:
-   - `File` $\to$ `Open Folder...` $\to$ select the cloned `sentinelgraph-ai` directory.
+#### On Windows:
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/hemashreems-1126/sentinelgraph-ai.git
+   cd sentinelgraph-ai
+   ```
+2. **Double-click `start.bat`** (or run `.\start.bat` in terminal).
+   - *It automatically installs any missing dependencies on first launch.*
+   - *It launches the FastAPI Backend and React Frontend in the background.*
+   - *It automatically opens your browser at **`http://localhost:3000`**!*
 
-2. **Launch the Backend & Frontend**:
-   - **On Windows**:
-     - In VS Code Terminal 1: run `.\run_backend.bat`
-     - In VS Code Terminal 2: run `.\run_frontend.bat`
-   - **On macOS / Linux**:
-     - In VS Code Terminal 1: run `./run_backend.sh`
-     - In VS Code Terminal 2: run `./run_frontend.sh`
-
-   *(Or press `Ctrl + Shift + B` in VS Code to run the automated VS Code Build Task that starts both automatically).*
-
-3. **Open in Your Browser**:
-   - 🌐 **Interactive Web Dashboard**: **[http://localhost:3000](http://localhost:3000)**
-   - 📑 **Interactive Backend OpenAPI Docs**: **[http://localhost:8000/docs](http://localhost:8000/docs)**
-
----
-
-## 💡 Quick Demo Walkthrough for Evaluators
-
-1. **Seed Ledger**: Open **[http://localhost:3000](http://localhost:3000)** and click the purple **"Generate Synthetic Batch"** button on the Dashboard. This simulates 200 customer entities and 1,500 transactions, injecting 5 fraud topologies and flagging anomalies via Rule heuristics + Isolation Forest ML.
-2. **Triage Queue**: Click **Alerts Queue** in the left sidebar $\to$ click **"Prioritize Queue"** to sort alerts by risk urgency $\to$ pick **Static Plan** or **Adaptive Planner** $\to$ click **"Investigate"**.
-3. **Inspect Multi-Agent Dossier**:
-   - **Full Agent Trail**: Click each step card to inspect per-agent inputs, outputs, and execution duration in milliseconds.
-   - **Sub-Agent Evidence & Graph**: Explore the interactive 2-hop NetworkX entity network and behavioral z-score analytics.
-   - **Deterministic Risk Score**: View the exact 0–100 mathematical score and policy action (`ALLOW`, `REVIEW`, `BLOCK`). Zero LLM hallucinations.
-   - **Drafted SAR Report**: View the FinCEN regulatory narrative draft.
-   - **Investigator Override**: Test submitting a human compliance sign-off override.
-4. **Audit Trail**: Inspect the cryptographic **SHA-256 immutable logs** recorded for each agent action.
-5. **Model Evaluation**: View live precision, recall ($100\%$), ROC-AUC ($0.9917$), and empirical confusion matrix.
+#### On macOS / Linux:
+```bash
+git clone https://github.com/hemashreems-1126/sentinelgraph-ai.git
+cd sentinelgraph-ai
+chmod +x start.sh run_backend.sh run_frontend.sh
+./start.sh
+```
 
 ---
 
-## 🐳 Alternative Run Option: Docker Compose
+### 🌐 Accessing the Running Application:
 
-If you have Docker and prefer a single containerized command:
+| Application Layer | URL | Description |
+|---|---|---|
+| **🎨 Interactive Visual Dashboard** | **[http://localhost:3000](http://localhost:3000)** | Full React UI with live charts, network graph, agent timeline, and SAR report viewer. |
+| **📑 Backend OpenAPI / Swagger Docs** | **[http://localhost:8000/docs](http://localhost:8000/docs)** | Interactive Swagger UI to test all 11-stage API endpoints directly. |
+
+*(Please keep the two command windows open in the background while using the platform).*
+
+---
+
+### 🐳 Option 2: Docker Compose (Alternative)
 
 ```bash
 docker compose up --build
 ```
-- Frontend: `http://localhost:3000`
-- Backend Docs: `http://localhost:8000/docs`
+- Web UI: `http://localhost:3000`
+- API Docs: `http://localhost:8000/docs`
 
 ---
 
-## Key Capabilities & Razorpay Track Mapping
+### 💻 Option 3: Visual Studio Code
 
-| Razorpay Track Requirement | SentinelGraph Implementation | Key Architectural Highlight |
-|---|---|---|
-| **1. Multi-Agent Reasoning & Orchestration** | LangGraph StateGraph (`backend/app/agents/workflow.py`) | 12 distinct functional nodes orchestrated by a **Supervisor Agent** with **conditional loop-back edges** (max 2 iterations) when forensic uncertainty warrants deeper evidence gathering. |
-| **2. Triage & Dual Monitoring** | Phase 1 Engine (`backend/app/services/monitor.py`, `triage.py`) | Dual rule heuristics + scikit-learn `IsolationForest` multidimensional anomaly detection with composite priority ranking. |
-| **3. Forensic Planning & Competing Hypotheses** | Planners & Hypotheses (`backend/app/agents/planner.py`, `hypothesis.py`) | Supports both **Static Checklist** (default SOP) and **Adaptive Planner** (LLM-driven re-planning), generating 2–4 competing hypotheses with probabilistic tracking. |
-| **4. Deep Forensic Sub-Agents** | 6 Specialized Subagents (`backend/app/agents/subagents/`) | Evidence Retrieval, NetworkX 2-Hop Graph Traversal, Behavioral Baseline Z-Scores, KYC Document Parsing, Mocked PEP/Sanctions Watchlists, and Unified Case Assembly. |
-| **5. Deterministic Governance & Compliance** | Risk Assignment & Auditing (`backend/app/agents/risk_scoring.py`, `auditing.py`) | **100% Deterministic Python Risk Scoring** (0–100 score, Low/Med/High/Critical bands, Allow/Review/Block policy). Zero LLM hallucinations. SHA-256 cryptographic audit trails. |
-| **6. Regulatory SAR Drafting & Feedback Loop** | SAR Drafter & Feedback (`backend/app/agents/report_drafter.py`, `api/investigations.py`) | FinCEN/FIU-style markdown SAR drafts labeled for compliance officer sign-off, plus interactive human investigator override feedback for continuous policy tuning. |
+1. Open folder in VS Code (`File` $\to$ `Open Folder...`).
+2. Press **`Ctrl + Shift + B`** (Runs the automated launch task).
+3. Open `http://localhost:3000`.
 
 ---
 
-## Empirical Benchmark Evaluation (Held-Out Test Set)
+## 🎮 2-Minute Demo Walkthrough (What to Click)
+
+To experience the full agentic workflow in the UI:
+
+1. **Seed Synthetic Ledger**:
+   - Open **`http://localhost:3000`**.
+   - Click the purple **"Generate Synthetic Batch"** button on the Dashboard.
+   - *What happens*: Simulates 200 customer accounts, 1,500 transactions, injects 5 fraud topologies (Structuring, Layering, Mule Accounts, Velocity Abuse, Non-linear Anomalies), and populates all real-time analytics charts.
+
+2. **Triage & Rank Alerts**:
+   - Click **Alerts Queue** in the left sidebar.
+   - Click **"Prioritize Queue"** to sort alerts by risk priority.
+   - Choose your planner mode at the top (**Static Plan** or **Adaptive Planner**).
+   - Click the purple **"Investigate"** button on any alert row.
+
+3. **Inspect the Multi-Agent Forensic Dossier**:
+   - **Full Agent Trail**: Click each step card to inspect per-agent inputs, outputs, and execution duration in milliseconds.
+   - **Sub-Agent Evidence & Graph**: Explore the interactive 2-hop NetworkX entity network and behavioral z-score analytics.
+   - **Deterministic Risk Score**: View the exact 0–100 mathematical score and policy action (`ALLOW`, `REVIEW`, `BLOCK`).
+   - **Drafted SAR Report**: View the FinCEN regulatory narrative draft.
+   - **Investigator Override**: Click **"Investigator Decision / Override"** to test submitting a human compliance sign-off.
+
+4. **Audit Trail**: Click **Audit Trail** in the left sidebar to inspect the cryptographic **SHA-256 immutable logs**.
+5. **Model Evaluation**: Click **Model Evaluation** to view the live precision, recall ($100\%$), ROC-AUC ($0.9917$), and empirical confusion matrix.
+
+---
+
+## 📊 Empirical Evaluation Benchmark (Held-Out Test Set)
 
 Evaluated via `python backend/run_eval.py` against the synthetic financial test split (**Zero Fabricated Numbers**):
 
-| Metric | Score | Empirical Context |
+| Metric | Score | Industry Interpretation |
 |---|---|---|
-| **Fraud Recall** | **100.00%** | 36 / 36 injected fraud topologies caught (Zero false negatives) |
+| **Fraud Recall** | **100.00%** | **36 / 36 injected fraud topologies caught** (Zero missed fraud cases) |
 | **ROC-AUC** | **0.9917** | Outstanding discriminative separation between benign and illicit patterns |
 | **Accuracy** | **80.08%** | Total test classification accuracy across all transaction topologies |
 | **Triage Precision** | **41.38%** | High-sensitivity surveillance funnel before multi-agent investigation filtering |
@@ -99,9 +152,9 @@ $$\begin{pmatrix} \text{True Positives: } 36 & \text{False Positives: } 51 \\ \t
 
 ---
 
-## Deterministic Risk Scoring & Policy Decision Engine
+## ⚖️ Deterministic Risk Scoring Formula
 
-SentinelGraph removes LLM hallucination risk by delegating the final score and policy action to a deterministic mathematical formula combining weighted forensic feature vectors:
+SentinelGraph removes LLM hallucination risk by calculating the final score and policy action using a deterministic mathematical formula combining weighted forensic feature vectors:
 
 $$Score = 100 \times \min\left(1.0, \, 0.25 \cdot \frac{S_{\text{raw}}}{100} + 0.25 \cdot \frac{S_{\text{graph}}}{100} + 0.20 \cdot \frac{S_{\text{behavior}}}{100} + 0.20 \cdot \frac{S_{\text{intel}}}{100} + 0.10 \cdot \frac{S_{\text{doc}}}{100}\right)$$
 
@@ -112,20 +165,49 @@ $$Score = 100 \times \min\left(1.0, \, 0.25 \cdot \frac{S_{\text{raw}}}{100} + 0
 
 ---
 
-## Repository Structure
+## 🧪 Automated Pytest Suite (14/14 Tests Passing)
+
+To run the automated backend test suite:
+```bash
+cd backend
+python -m pytest tests -v
+```
+
+```text
+tests/test_api_endpoints.py::test_health_endpoint PASSED                 [  7%]
+tests/test_api_endpoints.py::test_generate_and_list_alerts PASSED        [ 14%]
+tests/test_api_endpoints.py::test_evaluation_api PASSED                  [ 21%]
+tests/test_data_generator.py::test_synthetic_data_generator_generates_entities PASSED [ 28%]
+tests/test_monitor_triage.py::test_monitor_detects_alerts PASSED         [ 35%]
+tests/test_monitor_triage.py::test_triage_service_prioritizes_alerts PASSED [ 42%]
+tests/test_planner.py::test_static_checklist_for_structuring PASSED      [ 50%]
+tests/test_planner.py::test_planner_node_adaptive_and_static PASSED      [ 57%]
+tests/test_risk_scoring.py::test_deterministic_risk_scoring_bands PASSED [ 64%]
+tests/test_risk_scoring.py::test_risk_scoring_node_in_state PASSED       [ 71%]
+tests/test_smoke_e2e.py::test_full_investigation_pipeline_e2e_smoke PASSED [ 78%]
+tests/test_subagents.py::test_subagents_execution_pipeline PASSED        [ 85%]
+tests/test_workflow_graph.py::test_conditional_loop_back_decision PASSED [ 92%]
+tests/test_workflow_graph.py::test_compiled_graph_structure PASSED       [100%]
+
+======================== 14 passed in 3.39s ========================
+```
+
+---
+
+## 📁 Repository Structure
 
 ```
 sentinelgraph-ai/
-├── .vscode/                         # Native VS Code Tasks & Launch Configs
-│   ├── tasks.json                   # Press Ctrl+Shift+B to start all services
-│   └── launch.json                  # Native FastAPI Debugger configuration
-├── run_backend.bat                  # 1-Click Windows Backend Launcher
-├── run_frontend.bat                 # 1-Click Windows Frontend Launcher
-├── run_backend.sh                   # 1-Click macOS/Linux Backend Launcher
-├── run_frontend.sh                  # 1-Click macOS/Linux Frontend Launcher
+├── start.bat                        # 1-Click All-in-One Launcher for Windows (Auto-Installs & Opens Browser)
+├── start.sh                         # 1-Click All-in-One Launcher for macOS/Linux
+├── run_backend.bat                  # Dedicated Windows Backend Launcher
+├── run_frontend.bat                 # Dedicated Windows Frontend Launcher
+├── run_backend.sh                   # Dedicated macOS/Linux Backend Launcher
+├── run_frontend.sh                  # Dedicated macOS/Linux Frontend Launcher
+├── .vscode/                         # Native VS Code Tasks (Ctrl+Shift+B)
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                  # FastAPI entrypoint with CORS & lifespan
+│   │   ├── main.py                  # FastAPI server with CORS & lifespan
 │   │   ├── config.py                # Settings, Groq config, DB URLs, Thresholds
 │   │   ├── db/                      # SQLAlchemy models & session management
 │   │   ├── schemas/                 # Pydantic v2 schemas
@@ -140,14 +222,14 @@ sentinelgraph-ai/
 │   ├── src/
 │   │   ├── components/              # RiskBadge, DecisionBadge, AgentTrailCard, NetworkGraphView, SarReportViewer, FeedbackModal, Layout
 │   │   ├── pages/                   # Dashboard, AlertsPage, InvestigationsPage, InvestigationDetailPage, AuditLogPage, EvaluationPage
-│   │   ├── api/                     # Axios typed client
+│   │   ├── api/                     # Typed API client
 │   │   └── types/                   # TypeScript interfaces
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── tailwind.config.js
 │   └── Dockerfile
 ├── docs/
-│   ├── architecture_diagram.png     # Rendered architecture diagram
+│   ├── architecture_diagram.png     # Rendered high-res architecture diagram
 │   ├── generate_diagram.py          # Diagram generation script
 │   └── pipeline_spec.md             # Detailed pipeline documentation
 ├── docker-compose.yml               # Multi-container orchestration (Postgres, Backend, Frontend)
@@ -159,6 +241,19 @@ sentinelgraph-ai/
 
 ---
 
-## License & Attribution
+## 🏆 Razorpay Buildathon 2026 Track Mapping
 
-Built for the **Razorpay AI Buildathon 2026 ("AI Risk Manager" track)**. All transaction and entity data simulated synthetically for research and demonstration purposes.
+| Requirement | Implementation in SentinelGraph | Code Location |
+|---|---|---|
+| **Multi-Agent Orchestration** | Supervisor agent, short/long-term memory, conditional loop-backs (max 2 iterations) | `backend/app/agents/workflow.py`, `supervisor.py` |
+| **Intelligent Triage & Detection** | Heuristic rules + Isolation Forest anomaly detection with priority ranking | `backend/app/services/monitor.py`, `triage.py` |
+| **Forensic Planning & Hypotheses** | Static Checklist vs Adaptive LLM Planner; 2–4 competing hypotheses with probabilities | `backend/app/agents/planner.py`, `hypothesis.py` |
+| **Specialized Subagents** | Evidence retrieval, NetworkX 2-hop graph, behavioral z-scores, KYC documents, mock PEP/OFAC watchlists | `backend/app/agents/subagents/` |
+| **Deterministic Governance** | 100% Deterministic Python Risk Scoring (0–100); SHA-256 cryptographic audit logs | `backend/app/agents/risk_scoring.py`, `auditing.py` |
+| **Regulatory Reporting** | Automated FinCEN SAR narrative drafting with compliance officer sign-off & feedback loop | `backend/app/agents/report_drafter.py`, `api/investigations.py` |
+
+---
+
+## 📄 License
+
+MIT License. Developed for the **Razorpay AI Buildathon 2026 ("AI Risk Manager" track)**. All simulated datasets and watchlist entities are generated synthetically for demonstration purposes.
