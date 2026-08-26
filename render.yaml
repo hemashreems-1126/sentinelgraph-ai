@@ -32,11 +32,12 @@ services:
         value: "false"
 
   # Frontend Static Site
-  - type: static_site
+  - type: web
     name: sentinelgraph-frontend
+    runtime: static
     rootDir: frontend
     buildCommand: "npm install && npm run build"
-    publishDir: dist
+    staticPublishPath: dist
     routes:
       - type: rewrite
         source: /api/*
