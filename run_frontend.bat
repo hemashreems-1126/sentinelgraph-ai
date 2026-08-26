@@ -1,9 +1,20 @@
 @echo off
 title SentinelGraph Frontend (React + Vite)
 cd /d "%~dp0frontend"
-set "PATH=C:\Program Files\nodejs;%PATH%"
+if exist "C:\Program Files\nodejs" set "PATH=C:\Program Files\nodejs;%PATH%"
+
 echo ======================================================================
-echo Starting SentinelGraph Frontend on http://localhost:3000
+echo Starting SentinelGraph Frontend on http://localhost:3000 ...
 echo ======================================================================
-"C:\Program Files\nodejs\npm.cmd" run dev
-pause
+
+where npm >nul 2>nul
+if %ERRORLEVEL% equ 0 (
+    npm run dev
+) else (
+    if exist "C:\Program Files\nodejs\npm.cmd" (
+        "C:\Program Files\nodejs\npm.cmd" run dev
+    ) else (
+        echo [ERROR] Node.js / npm not found! Please install Node.js from https://nodejs.org
+        pause
+    )
+)
