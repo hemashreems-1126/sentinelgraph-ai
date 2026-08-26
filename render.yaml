@@ -25,18 +25,16 @@ services:
           name: sentinelgraph-db
           property: connectionString
       - key: GROQ_API_KEY
-        sync: false # Set via Render Dashboard
+        sync: false # Set via Render Dashboard or leave empty for automatic mock mode
       - key: GROQ_MODEL
         value: llama-3.3-70b-versatile
       - key: USE_MOCK_LLM
         value: "false"
 
-  # Frontend Web Service
+  # Frontend Web Service (Static sites are globally distributed on Render CDN and do not take a region)
   - type: web
     name: sentinelgraph-frontend
     env: static
-    region: oregon
-    plan: free
     rootDir: frontend
     buildCommand: "npm install && npm run build"
     staticPublishPath: dist
