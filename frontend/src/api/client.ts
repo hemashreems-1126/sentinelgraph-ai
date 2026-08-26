@@ -9,8 +9,23 @@ import {
   InvestigatorFeedbackItem
 } from '../types';
 
+// Determine API base URL:
+// 1. Environment variable if provided
+// 2. Direct Render backend URL if running on *.onrender.com
+// 3. Relative '/api' for local proxy & Docker Compose
+const getBaseUrl = () => {
+  const metaEnv = (import.meta as any).env;
+  if (metaEnv && metaEnv.VITE_API_BASE_URL) {
+    return metaEnv.VITE_API_BASE_URL;
+  }
+  if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
+    return 'https://sentinelgraph-backend.onrender.com/api';
+  }
+  return '/api';
+};
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
