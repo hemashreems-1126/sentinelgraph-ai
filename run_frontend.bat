@@ -7,6 +7,16 @@ echo ======================================================================
 echo Starting SentinelGraph Frontend on http://localhost:3000 ...
 echo ======================================================================
 
+if not exist "node_modules" (
+    echo [Fresh Clone Setup] Installing frontend packages... Please wait ~15s.
+    where npm >nul 2>nul
+    if %ERRORLEVEL% equ 0 (
+        call npm install
+    ) else (
+        call "C:\Program Files\nodejs\npm.cmd" install
+    )
+)
+
 where npm >nul 2>nul
 if %ERRORLEVEL% equ 0 (
     npm run dev
