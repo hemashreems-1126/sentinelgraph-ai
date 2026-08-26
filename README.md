@@ -17,11 +17,75 @@
 
 ---
 
-## Live Demo & Deployment
+## 🚀 Quickstart — Run Locally in 10 Seconds
 
-- **Live Web Application**: [https://sentinelgraph-frontend.onrender.com](https://sentinelgraph-frontend.onrender.com) *(Update with your deployed Render URL)*
-- **Interactive OpenAPI Backend Docs**: [https://sentinelgraph-backend.onrender.com/docs](https://sentinelgraph-backend.onrender.com/docs)
-- **One-Click Deploy**: Blueprint defined in [`render.yaml`](render.yaml) for instant deployment of PostgreSQL, FastAPI backend, and React static frontend.
+### Option 1: 1-Click Startup Scripts (Recommended — Zero Setup)
+
+#### On Windows:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/hemashreems-1126/sentinelgraph-ai.git
+   cd sentinelgraph-ai
+   ```
+2. Double-click or run from terminal:
+   - **`.\run_backend.bat`** *(Starts FastAPI Backend on `http://localhost:8000`)*
+   - **`.\run_frontend.bat`** *(Starts React Frontend on `http://localhost:3000`)*
+
+#### On macOS / Linux:
+```bash
+git clone https://github.com/hemashreems-1126/sentinelgraph-ai.git
+cd sentinelgraph-ai
+chmod +x run_backend.sh run_frontend.sh
+./run_backend.sh &
+./run_frontend.sh
+```
+
+👉 **Open in your browser**:
+- **Interactive Visual Dashboard**: **[http://localhost:3000](http://localhost:3000)**
+- **Interactive Backend Swagger Docs**: **[http://localhost:8000/docs](http://localhost:8000/docs)**
+
+---
+
+### Option 2: Universal Docker Compose (All-in-One)
+
+```bash
+docker compose up --build
+```
+- Frontend UI: `http://localhost:3000`
+- Backend API Docs: `http://localhost:8000/docs`
+
+---
+
+### Option 3: Manual Terminal Commands
+
+#### 1. Backend (FastAPI + LangGraph)
+```bash
+cd backend
+pip install -r requirements.txt
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+#### 2. Frontend (React + Vite + Tailwind)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## 💡 Quick Demo Walkthrough for Evaluators
+
+1. **Seed Ledger**: Open **[http://localhost:3000](http://localhost:3000)** and click the purple **"Generate Synthetic Batch"** button on the Dashboard. This simulates 200 customer entities and 1,500 transactions, injecting 5 fraud topologies and flagging anomalies via Rule heuristics + Isolation Forest ML.
+2. **Triage Queue**: Click **Alerts Queue** in the left sidebar $\to$ click **"Prioritize Queue"** to sort alerts by risk urgency $\to$ pick **Static Plan** or **Adaptive Planner** $\to$ click **"Investigate"**.
+3. **Inspect Multi-Agent Dossier**:
+   - **Full Agent Trail**: Click each step card to inspect per-agent inputs, outputs, and execution duration in milliseconds.
+   - **Sub-Agent Evidence & Graph**: Explore the interactive 2-hop NetworkX entity network and behavioral z-score analytics.
+   - **Deterministic Risk Score**: View the exact 0–100 mathematical score and policy action (`ALLOW`, `REVIEW`, `BLOCK`). Zero LLM hallucinations.
+   - **Drafted SAR Report**: View the FinCEN regulatory narrative draft.
+   - **Investigator Override**: Test submitting a human compliance sign-off override.
+4. **Audit Trail**: Inspect the cryptographic **SHA-256 immutable logs** recorded for each agent action.
+5. **Model Evaluation**: View live precision, recall ($100\%$), ROC-AUC ($0.9917$), and empirical confusion matrix.
 
 ---
 
@@ -55,56 +119,6 @@ $$\begin{pmatrix} \text{True Positives: } 36 & \text{False Positives: } 51 \\ \t
 
 ---
 
-## Quickstart — Run Locally in 2 Minutes
-
-### Option A: Full Stack via Docker Compose (Recommended)
-
-```bash
-# 1. Clone repository
-git clone https://github.com/yourusername/sentinelgraph-ai.git
-cd sentinelgraph-ai
-
-# 2. Copy environment template
-cp .env.example .env
-
-# Optional: Add your Groq API Key to .env (leave empty for automatic high-fidelity offline mock mode)
-# GROQ_API_KEY=gsk_your_groq_api_key
-
-# 3. Boot Backend, Frontend & PostgreSQL
-docker compose up --build
-```
-- Frontend UI: `http://localhost:3000`
-- Backend API & Interactive Docs: `http://localhost:8000/docs`
-
----
-
-### Option B: Standalone Local Development
-
-#### 1. Backend (FastAPI + LangGraph)
-```bash
-cd backend
-python -m pip install -r requirements.txt
-
-# Run full test suite (14/14 tests)
-python -m pytest tests -v
-
-# Run benchmark evaluation
-python run_eval.py
-
-# Start FastAPI server
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-#### 2. Frontend (React + Vite + Tailwind)
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Visit `http://localhost:3000` in your browser.
-
----
-
 ## Deterministic Risk Scoring & Policy Decision Engine
 
 SentinelGraph removes LLM hallucination risk by delegating the final score and policy action to a deterministic mathematical formula combining weighted forensic feature vectors:
@@ -116,16 +130,16 @@ $$Score = 100 \times \min\left(1.0, \, 0.25 \cdot \frac{S_{\text{raw}}}{100} + 0
   ├───── ALLOW ─────┤├────────────── REVIEW ──────────────┤├──────────── BLOCK ────────────┤
 ```
 
-- **ALLOW (0–30)**: Benign consumer / commercial transaction flow.
-- **REVIEW (31–70)**: Borderline anomaly requiring compliance officer review.
-- **BLOCK (71–100)**: Severe risk signal (Structuring, Layering chain, or Watchlist hit).
-
 ---
 
-## Project Repository Structure
+## Repository Structure
 
 ```
 sentinelgraph-ai/
+├── run_backend.bat                  # 1-Click Windows Backend Launcher
+├── run_frontend.bat                 # 1-Click Windows Frontend Launcher
+├── run_backend.sh                   # 1-Click macOS/Linux Backend Launcher
+├── run_frontend.sh                  # 1-Click macOS/Linux Frontend Launcher
 ├── backend/
 │   ├── app/
 │   │   ├── main.py                  # FastAPI entrypoint with CORS & lifespan
