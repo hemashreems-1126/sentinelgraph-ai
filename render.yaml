@@ -9,7 +9,7 @@ services:
   # Backend Web Service
   - type: web
     name: sentinelgraph-backend
-    env: python
+    runtime: python
     region: oregon
     plan: free
     rootDir: backend
@@ -25,19 +25,18 @@ services:
           name: sentinelgraph-db
           property: connectionString
       - key: GROQ_API_KEY
-        sync: false # Set via Render Dashboard or leave empty for automatic mock mode
+        sync: false
       - key: GROQ_MODEL
         value: llama-3.3-70b-versatile
       - key: USE_MOCK_LLM
         value: "false"
 
-  # Frontend Web Service (Static sites are globally distributed on Render CDN and do not take a region)
-  - type: web
+  # Frontend Static Site
+  - type: static_site
     name: sentinelgraph-frontend
-    env: static
     rootDir: frontend
     buildCommand: "npm install && npm run build"
-    staticPublishPath: dist
+    publishDir: dist
     routes:
       - type: rewrite
         source: /api/*
