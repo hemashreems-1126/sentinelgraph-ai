@@ -1,5 +1,8 @@
 # 🛡️ SentinelGraph — Multi-Agent Financial Crime Alert Investigation Platform
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-sentinelgraph--frontend.onrender.com-4F46E5.svg?style=for-the-badge&logo=render&logoColor=white)](https://sentinelgraph-frontend.onrender.com)
+[![API Docs](https://img.shields.io/badge/Backend%20API-Swagger%20OpenAPI-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://sentinelgraph-backend.onrender.com/docs)
+
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%2B%20Python-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![LangGraph](https://img.shields.io/badge/Agentic%20Workflow-LangGraph-FF6B6B.svg)](https://github.com/langchain-ai/langgraph)
 [![Groq LLM](https://img.shields.io/badge/LLM-Groq%20(LLaMA--3.3)--F55036.svg)](https://groq.com)
@@ -9,6 +12,16 @@
 
 > **Built for the Razorpay AI Buildathon 2026 — "AI Risk Manager" Track**  
 > An autonomous, end-to-end multi-agent AI system that simulates, detects, triages, investigates, and drafts regulatory compliance reports for complex financial crime (AML/Fraud) with **100% deterministic mathematical risk scoring** and cryptographic audit trails.
+
+---
+
+## 🌐 Live Cloud Deployment Links
+
+| Deployment | Live URL | Description |
+|---|---|---|
+| 🚀 **Live Web Application (Frontend)** | **[https://sentinelgraph-frontend.onrender.com](https://sentinelgraph-frontend.onrender.com)** | Full interactive React dashboard, 2-hop entity graph viewer, agent timelines, and SAR report generator. |
+| 📑 **Backend OpenAPI / Swagger Docs** | **[https://sentinelgraph-backend.onrender.com/docs](https://sentinelgraph-backend.onrender.com/docs)** | Interactive Swagger UI to test all 11-stage backend API endpoints directly in the cloud. |
+| ⚡ **Backend Service Root** | **[https://sentinelgraph-backend.onrender.com](https://sentinelgraph-backend.onrender.com)** | FastAPI production health and service status endpoint. |
 
 ---
 
@@ -52,7 +65,7 @@ Traditional financial risk management and Anti-Money Laundering (AML) monitoring
 
 ---
 
-## 🚀 How to Run (1-Click Startup — Zero Setup)
+## 🚀 How to Run Locally (1-Click Startup — Zero Setup)
 
 Whether you are a recruiter, reviewer, or developer, SentinelGraph is designed to run in **one click** with **zero configuration, zero paid API keys, and zero external database setup** (SQLite is built-in).
 
@@ -79,17 +92,6 @@ chmod +x start.sh run_backend.sh run_frontend.sh
 
 ---
 
-### 🌐 Accessing the Running Application:
-
-| Application Layer | URL | Description |
-|---|---|---|
-| **🎨 Interactive Visual Dashboard** | **[http://localhost:3000](http://localhost:3000)** | Full React UI with live charts, network graph, agent timeline, and SAR report viewer. |
-| **📑 Backend OpenAPI / Swagger Docs** | **[http://localhost:8000/docs](http://localhost:8000/docs)** | Interactive Swagger UI to test all 11-stage API endpoints directly. |
-
-*(Please keep the two command windows open in the background while using the platform).*
-
----
-
 ### 🐳 Option 2: Docker Compose (Alternative)
 
 ```bash
@@ -113,7 +115,7 @@ docker compose up --build
 To experience the full agentic workflow in the UI:
 
 1. **Seed Synthetic Ledger**:
-   - Open **`http://localhost:3000`**.
+   - Open the live app (or `http://localhost:3000` locally).
    - Click the purple **"Generate Synthetic Batch"** button on the Dashboard.
    - *What happens*: Simulates 200 customer accounts, 1,500 transactions, injects 5 fraud topologies (Structuring, Layering, Mule Accounts, Velocity Abuse, Non-linear Anomalies), and populates all real-time analytics charts.
 
