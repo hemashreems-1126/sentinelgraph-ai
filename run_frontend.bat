@@ -1,6 +1,9 @@
 @echo off
 title SentinelGraph Frontend (React + Vite)
-cd /d "%~dp0frontend"
+setlocal
+
+cd /d "%~dp0"
+if exist "frontend" cd /d "%~dp0frontend"
 if exist "C:\Program Files\nodejs" set "PATH=C:\Program Files\nodejs;%PATH%"
 
 echo ======================================================================
@@ -8,7 +11,7 @@ echo Starting SentinelGraph Frontend on http://localhost:3000 ...
 echo ======================================================================
 
 if not exist "node_modules" (
-    echo [Fresh Clone Setup] Installing frontend packages... Please wait ~15s.
+    echo [Initial Setup] Installing frontend packages... Please wait ~15s.
     where npm >nul 2>nul
     if %ERRORLEVEL% equ 0 (
         call npm install
@@ -28,3 +31,4 @@ if %ERRORLEVEL% equ 0 (
         pause
     )
 )
+pause
