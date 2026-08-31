@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db.session import init_db
+from app.services.seed import auto_seed_initial_data
 from app.api.router import api_router
 
 logging.basicConfig(
@@ -24,6 +25,8 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.PROJECT_NAME} v{settings.VERSION} in {settings.ENVIRONMENT} mode...")
     init_db()
     logger.info("Database tables verified / initialized.")
+    # Auto-seed sample ledger, prioritized alerts, investigations & evaluations if DB is empty
+    auto_seed_initial_data()
     yield
     logger.info(f"Shutting down {settings.PROJECT_NAME}...")
 
