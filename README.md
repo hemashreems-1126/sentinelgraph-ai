@@ -1,27 +1,26 @@
 # 🛡️ SentinelGraph — Multi-Agent Financial Crime Alert Investigation Platform
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-sentinelgraph--frontend.onrender.com-4F46E5.svg?style=for-the-badge&logo=render&logoColor=white)](https://sentinelgraph-frontend.onrender.com)
-[![API Docs](https://img.shields.io/badge/Backend%20API-Swagger%20OpenAPI-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://sentinelgraph-backend.onrender.com/docs)
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Web%20Application-Click%20Here%20to%20Open-4F46E5.svg?style=for-the-badge&logo=render&logoColor=white)](https://sentinelgraph-frontend.onrender.com)
+[![API Docs](https://img.shields.io/badge/📑%20Backend%20API-Swagger%20OpenAPI-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://sentinelgraph-backend.onrender.com/docs)
 
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%2B%20Python-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/Agentic%20Workflow-LangGraph-FF6B6B.svg)](https://github.com/langchain-ai/langgraph)
-[![Groq LLM](https://img.shields.io/badge/LLM-Groq%20(LLaMA--3.3)--F55036.svg)](https://groq.com)
-[![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite%20%2B%20Tailwind-61DAFB.svg?logo=react&logoColor=black)](https://react.dev)
-[![Tests](https://img.shields.io/badge/Automated%20Tests-14%2F14%20Passing-10B981.svg)]()
-[![Evaluation](https://img.shields.io/badge/Fraud%20Recall-100%25%20(ROC--AUC%200.9917)-10B981.svg)]()
+[![FastAPI](https://img.shields.io/badge/FastAPI-Python%203.11-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-FF6B6B?logo=langchain&logoColor=white)](https://github.com/langchain-ai/langgraph)
+[![Groq](https://img.shields.io/badge/LLM-Groq%20LLaMA--3.3-F55036)](https://groq.com)
+[![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite%20%2B%20Tailwind-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![Pytest](https://img.shields.io/badge/Pytest-14%2F14%20Passing-10B981?logo=pytest&logoColor=white)](https://github.com/hemashreems-1126/sentinelgraph-ai)
+[![Fraud Recall](https://img.shields.io/badge/Fraud%20Recall-100%25%20(ROC--AUC%200.9917)-10B981)](https://github.com/hemashreems-1126/sentinelgraph-ai)
 
 > **Built for the Razorpay AI Buildathon 2026 — "AI Risk Manager" Track**  
 > An autonomous, end-to-end multi-agent AI system that simulates, detects, triages, investigates, and drafts regulatory compliance reports for complex financial crime (AML/Fraud) with **100% deterministic mathematical risk scoring** and cryptographic audit trails.
 
 ---
 
-## 🌐 Live Cloud Deployment Links
+## 🌐 Quick Access Links
 
-| Deployment | Live URL | Description |
+| Layer | URL | Description |
 |---|---|---|
-| 🚀 **Live Web Application (Frontend)** | **[https://sentinelgraph-frontend.onrender.com](https://sentinelgraph-frontend.onrender.com)** | Full interactive React dashboard, 2-hop entity graph viewer, agent timelines, and SAR report generator. |
-| 📑 **Backend OpenAPI / Swagger Docs** | **[https://sentinelgraph-backend.onrender.com/docs](https://sentinelgraph-backend.onrender.com/docs)** | Interactive Swagger UI to test all 11-stage backend API endpoints directly in the cloud. |
-| ⚡ **Backend Service Root** | **[https://sentinelgraph-backend.onrender.com](https://sentinelgraph-backend.onrender.com)** | FastAPI production health and service status endpoint. |
+| 🚀 **Live Web Application (Frontend)** | **[https://sentinelgraph-frontend.onrender.com](https://sentinelgraph-frontend.onrender.com)** | Full interactive React dashboard with pre-loaded alerts, 2-hop entity graph viewer, agent timelines, and SAR report generator. |
+| 📑 **Backend OpenAPI / Swagger Docs** | **[https://sentinelgraph-backend.onrender.com/docs](https://sentinelgraph-backend.onrender.com/docs)** | Interactive Swagger UI to inspect and test all 11-stage backend API endpoints directly in the cloud. |
 
 ---
 
@@ -67,7 +66,7 @@ Traditional financial risk management and Anti-Money Laundering (AML) monitoring
 
 ## 🚀 How to Run Locally (1-Click Startup — Zero Setup)
 
-Whether you are a recruiter, reviewer, or developer, SentinelGraph is designed to run in **one click** with **zero configuration, zero paid API keys, and zero external database setup** (SQLite is built-in).
+Whether you are a recruiter, reviewer, or developer, SentinelGraph is designed to run in **one click** with **zero configuration, zero paid API keys, and zero external database setup** (SQLite is pre-seeded and built-in).
 
 ### 🖥️ Option 1: 1-Click All-in-One Launcher (Recommended)
 
@@ -79,8 +78,8 @@ Whether you are a recruiter, reviewer, or developer, SentinelGraph is designed t
    ```
 2. **Double-click `start.bat`** (or run `.\start.bat` in terminal).
    - *It automatically installs any missing dependencies on first launch.*
-   - *It launches the FastAPI Backend and React Frontend in the background.*
-   - *It automatically opens your browser at **`http://localhost:3000`**!*
+   - *It launches the FastAPI Backend (`http://localhost:8000`) and React Frontend (`http://localhost:3000`) in the background.*
+   - *It automatically opens your browser at **`http://localhost:3000`** with full pre-loaded data!*
 
 #### On macOS / Linux:
 ```bash
@@ -114,14 +113,14 @@ docker compose up --build
 
 To experience the full agentic workflow in the UI:
 
-1. **Seed Synthetic Ledger**:
-   - Open the live app (or `http://localhost:3000` locally).
-   - Click the purple **"Generate Synthetic Batch"** button on the Dashboard.
-   - *What happens*: Simulates 200 customer accounts, 1,500 transactions, injects 5 fraud topologies (Structuring, Layering, Mule Accounts, Velocity Abuse, Non-linear Anomalies), and populates all real-time analytics charts.
+1. **Dashboard Overview**:
+   - Open **`https://sentinelgraph-frontend.onrender.com`** (or `http://localhost:3000` locally).
+   - The dashboard is pre-populated with 64 alerts and 6 completed investigation dossiers.
+   - Click **"Generate Synthetic Batch"** to inject additional transactions and fraud patterns in real-time.
 
 2. **Triage & Rank Alerts**:
    - Click **Alerts Queue** in the left sidebar.
-   - Click **"Prioritize Queue"** to sort alerts by risk priority.
+   - Click **"Prioritize Queue"** to sort alerts by risk urgency.
    - Choose your planner mode at the top (**Static Plan** or **Adaptive Planner**).
    - Click the purple **"Investigate"** button on any alert row.
 
@@ -209,11 +208,11 @@ sentinelgraph-ai/
 ├── .vscode/                         # Native VS Code Tasks (Ctrl+Shift+B)
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                  # FastAPI server with CORS & lifespan
+│   │   ├── main.py                  # FastAPI server with CORS & lifespan auto-seed
 │   │   ├── config.py                # Settings, Groq config, DB URLs, Thresholds
 │   │   ├── db/                      # SQLAlchemy models & session management
 │   │   ├── schemas/                 # Pydantic v2 schemas
-│   │   ├── services/                # Data generator, Monitor, Triage, LLM, GraphStore
+│   │   ├── services/                # Data generator, Monitor, Triage, LLM, GraphStore, Seed
 │   │   ├── agents/                  # LangGraph Supervisor, Planner, Hypotheses, Subagents, Reasoning, Risk Scoring, Audit, SAR Drafter
 │   │   └── api/                     # REST API routers (Alerts, Investigations, Audit, Evaluation)
 │   ├── tests/                       # 14 Pytest unit, integration & E2E smoke tests
@@ -224,7 +223,7 @@ sentinelgraph-ai/
 │   ├── src/
 │   │   ├── components/              # RiskBadge, DecisionBadge, AgentTrailCard, NetworkGraphView, SarReportViewer, FeedbackModal, Layout
 │   │   ├── pages/                   # Dashboard, AlertsPage, InvestigationsPage, InvestigationDetailPage, AuditLogPage, EvaluationPage
-│   │   ├── api/                     # Typed API client
+│   │   ├── api/                     # Typed API client with seamless offline/cloud fallback store
 │   │   └── types/                   # TypeScript interfaces
 │   ├── package.json
 │   ├── vite.config.ts
