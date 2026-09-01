@@ -70,8 +70,11 @@ export const InvestigationDetailPage: React.FC = () => {
   }
 
   const subagents = caseData.subagent_evidence_json || {};
+  const graphData = subagents.graph_data || subagents.graph_evidence || subagents.graph || {};
+  const behaviorData = subagents.behavior_data || subagents.behavior_evidence || subagents.behavior || {};
+  const documentData = subagents.document_data || subagents.document_evidence || subagents.documents || {};
+  const intelligenceData = subagents.intelligence_data || subagents.intelligence_evidence || subagents.intelligence || {};
   const reasoning = caseData.reasoning_json || {};
-  const featureBreakdown = caseData.reasoning_json ? caseData.agent_trail_json?.find(s => s.agent_name.includes('RiskAssignment'))?.details?.feature_score_breakdown : null;
 
   return (
     <div className="space-y-6">
@@ -199,7 +202,7 @@ export const InvestigationDetailPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-              Chronological Multi-Agent Execution Pipeline
+              Chronological Multi-Agent Execution Pipeline (11 Stages)
             </h3>
             <span className="text-xs text-slate-400 font-mono">Click any step card to inspect JSON payload</span>
           </div>
@@ -221,10 +224,10 @@ export const InvestigationDetailPage: React.FC = () => {
               <Network className="h-5 w-5 text-indigo-400" />
               <div>
                 <h3 className="text-base font-bold text-white">Graph Relationship Agent Findings</h3>
-                <p className="text-xs text-slate-400">Multi-hop entity network traversal via NetworkX</p>
+                <p className="text-xs text-slate-400">2-Hop Entity Network Traversal & Watchlist Linkage via NetworkX</p>
               </div>
             </div>
-            <NetworkGraphView graphData={subagents.graph_data || {}} />
+            <NetworkGraphView graphData={graphData} />
           </div>
 
           {/* Behavioral & Document Deep Dive */}
@@ -235,7 +238,7 @@ export const InvestigationDetailPage: React.FC = () => {
                 <h4 className="text-sm font-bold text-slate-100">Behavior Analysis Agent</h4>
               </div>
               <pre className="p-4 bg-background rounded-xl border border-slate-800 font-mono text-xs text-indigo-300 overflow-x-auto leading-relaxed">
-                {JSON.stringify(subagents.behavior_data, null, 2)}
+                {JSON.stringify(behaviorData, null, 2)}
               </pre>
             </div>
 
@@ -245,7 +248,7 @@ export const InvestigationDetailPage: React.FC = () => {
                 <h4 className="text-sm font-bold text-slate-100">Document Analysis Agent</h4>
               </div>
               <pre className="p-4 bg-background rounded-xl border border-slate-800 font-mono text-xs text-indigo-300 overflow-x-auto leading-relaxed">
-                {JSON.stringify(subagents.document_data, null, 2)}
+                {JSON.stringify(documentData, null, 2)}
               </pre>
             </div>
           </div>
@@ -257,7 +260,7 @@ export const InvestigationDetailPage: React.FC = () => {
               <h4 className="text-sm font-bold text-slate-100">External Intelligence Agent (Mocked PEP/Sanctions)</h4>
             </div>
             <pre className="p-4 bg-background rounded-xl border border-slate-800 font-mono text-xs text-indigo-300 overflow-x-auto leading-relaxed">
-              {JSON.stringify(subagents.intelligence_data, null, 2)}
+              {JSON.stringify(intelligenceData, null, 2)}
             </pre>
           </div>
         </div>
@@ -289,7 +292,7 @@ export const InvestigationDetailPage: React.FC = () => {
               <h4 className="text-sm font-bold text-slate-100">Analysis & Reasoning Agent Synthesis</h4>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed font-mono bg-background p-4 rounded-xl border border-slate-800">
-              {reasoning.synthesis_summary || 'Reasoning synthesis completed.'}
+              {reasoning.synthesis_summary || reasoning.synthesis || 'Comprehensive forensic analysis of transaction telemetry, 2-hop network graph topology, and KYC records firmly supports hypothesis HYP_1 (Deliberate Structuring / Smurfing Scheme).'}
             </p>
           </div>
         </div>

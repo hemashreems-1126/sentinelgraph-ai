@@ -286,13 +286,42 @@ export const INITIAL_MOCK_CASE_DETAIL: InvestigationCaseDetail = {
     }
   ],
   subagent_evidence_json: {
+    graph_data: {
+      total_counterparties: 5,
+      high_risk_connections_count: 2,
+      shortest_path_to_watchlist: "ACC_CUST_0042_1 -> ACC_CUST_0399_2 -> ACC_CUST_0155_1 (Sanctions Hit: 2 Hops)",
+      nodes: [
+        { id: "ACC_CUST_0042_1", label: "Alexander Vance (Target Subject)", customer_id: "CUST_0042", risk_tier: "HIGH", is_pep: false, is_sanctioned: false, is_target: true },
+        { id: "ACC_CUST_0012_1", label: "Marcus Kovacs (Feeder 1)", customer_id: "CUST_0012", risk_tier: "MEDIUM", is_pep: false, is_sanctioned: false, is_target: false },
+        { id: "ACC_CUST_0033_2", label: "Elena Sterling (Feeder 2)", customer_id: "CUST_0033", risk_tier: "MEDIUM", is_pep: false, is_sanctioned: false, is_target: false },
+        { id: "ACC_CUST_0078_1", label: "Liam Al-Mansoor (Feeder 3)", customer_id: "CUST_0078", risk_tier: "HIGH", is_pep: true, is_sanctioned: false, is_target: false },
+        { id: "ACC_CUST_0399_2", label: "Apex Intermediary Ltd (Shell Gateway)", customer_id: "CUST_0399", risk_tier: "HIGH", is_pep: false, is_sanctioned: false, is_target: false },
+        { id: "ACC_CUST_0155_1", label: "Offshore Capital Holdings (Watchlist Entity)", customer_id: "CUST_0155", risk_tier: "HIGH", is_pep: false, is_sanctioned: true, is_target: false }
+      ],
+      edges: [
+        { source: "ACC_CUST_0012_1", target: "ACC_CUST_0042_1", amount: 9850.00, count: 1, txn_type: "WIRE" },
+        { source: "ACC_CUST_0033_2", target: "ACC_CUST_0042_1", amount: 9920.00, count: 1, txn_type: "CASH_DEPOSIT" },
+        { source: "ACC_CUST_0078_1", target: "ACC_CUST_0042_1", amount: 9650.00, count: 1, txn_type: "WIRE" },
+        { source: "ACC_CUST_0042_1", target: "ACC_CUST_0399_2", amount: 28500.00, count: 1, txn_type: "WIRE" },
+        { source: "ACC_CUST_0399_2", target: "ACC_CUST_0155_1", amount: 27600.00, count: 1, txn_type: "WIRE" }
+      ]
+    },
     graph_evidence: {
       target_account: "ACC_CUST_0042_1",
-      hop_1_counterparties: ["ACC_CUST_0012_1", "ACC_CUST_0033_2", "ACC_CUST_0078_1", "ACC_CUST_0091_1", "ACC_CUST_0118_1"],
-      hop_2_counterparties: ["ACC_CUST_0155_1 (Sanctions High-Risk Flag)", "ACC_CUST_0399_2 (Shell Entity)"],
+      hop_1_counterparties: ["ACC_CUST_0012_1", "ACC_CUST_0033_2", "ACC_CUST_0078_1"],
+      hop_2_counterparties: ["ACC_CUST_0155_1 (Sanctions Hit)", "ACC_CUST_0399_2"],
       shortest_path_to_watchlist: 2,
       total_inflow_24h: 58200.00,
       total_outflow_24h: 56100.00
+    },
+    behavior_data: {
+      z_score: 5.12,
+      velocity_anomaly_ratio: 9.6,
+      historical_daily_avg: 1450.00,
+      current_24h_volume: 58200.00,
+      baseline_variance_flag: "EXTREME_ANOMALY",
+      sub_threshold_transactions_count: 6,
+      time_span_minutes: 240
     },
     behavior_evidence: {
       z_score: 5.12,
@@ -301,21 +330,36 @@ export const INITIAL_MOCK_CASE_DETAIL: InvestigationCaseDetail = {
       current_24h_volume: 58200.00,
       baseline_variance_flag: "EXTREME_ANOMALY"
     },
+    document_data: {
+      customer_name: "Alexander Vance",
+      declared_occupation: "Digital Marketing Agency",
+      expected_monthly_turnover: "$15,000 - $30,000",
+      actual_monthly_turnover: "$178,500",
+      turnover_discrepancy: "495% ABOVE DECLARATION",
+      kyc_risk_tier: "MEDIUM",
+      source_of_wealth_declared: "Client invoicing"
+    },
     document_evidence: {
       declared_occupation: "Digital Marketing Agency",
       expected_monthly_turnover: "$15,000 - $30,000",
       actual_monthly_turnover: "$178,500",
-      kyc_risk_tier: "MEDIUM",
-      source_of_wealth_declared: "Client invoicing"
+      kyc_risk_tier: "MEDIUM"
+    },
+    intelligence_data: {
+      target_pep_status: "NEGATIVE",
+      ofac_sanctions_match: "NEGATIVE",
+      adverse_media_hits: 2,
+      adverse_media_summary: "Entity named in 2024 regional tax evasion inquiry regarding offshore routing",
+      counterparty_sanctions_hit: "ACC_CUST_0155_1 (High-Risk Jurisdiction / Sanctioned List)"
     },
     intelligence_evidence: {
       pep_match: false,
       ofac_sanctions_match: false,
-      adverse_media_hits: 2,
-      associated_high_risk_jurisdiction: "AE / BVI / CY"
+      adverse_media_hits: 2
     }
   },
   reasoning_json: {
+    synthesis_summary: "Comprehensive forensic analysis of transaction telemetry, 2-hop network graph topology, and KYC records firmly supports Hypothesis HYP_1 (Deliberate Structuring / Smurfing Scheme). The target entity exhibits an extreme +5.12 sigma velocity surge with 6 sub-$10,000 deposits totaling $58,200.00, followed immediately by multi-hop outbound pass-through routing to a high-risk offshore watchlist entity.",
     synthesis: "Comprehensive analysis of transaction telemetry, 2-hop network graph topology, and KYC records firmly supports Hypothesis HYP_1 (Deliberate Structuring). The account exhibits an extreme +5.12 sigma velocity surge with 6 deposits just below the $10,000 CTR reporting limit, closely followed by an outbound wire to an unverified intermediary entity.",
     loop_back_required: false,
     confidence: 0.97
