@@ -32,7 +32,7 @@ services:
     routes:
       - type: rewrite
         source: /api/*
-        destination: https://sentinelgraph-backend.onrender.com/api/*
+        destination: https://sentinelgraph-backend-yeci.onrender.com/api/*
       - type: rewrite
         source: /*
         destination: /index.html
