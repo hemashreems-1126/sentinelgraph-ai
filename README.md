@@ -9,7 +9,7 @@
 ![React](https://img.shields.io/badge/React%20%2B%20TypeScript-61DAFB?logo=react&logoColor=black)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL%20%7C%20SQLite-336791?logo=postgresql&logoColor=white)
 
-Live demo: [sentinelgraph-frontend.onrender.com](https://sentinelgraph-frontend.onrender.com) · API docs: [/docs](https://sentinelgraph-backend.onrender.com/docs)
+Live demo: [sentinelgraph-frontend.onrender.com](https://sentinelgraph-frontend.onrender.com) · API docs: [/docs](https://sentinelgraph-backend-yeci.onrender.com/docs)
 (free hosting — the first request can take ~1 minute while the server wakes up)
 
 ![STR draft for a UPI mule account — every claim verified against the ledger](docs/screenshots/str_upi_mule.png)
