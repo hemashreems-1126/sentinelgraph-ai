@@ -18,6 +18,7 @@ import { apiClient } from '../api/client';
 import { AlertStatsSummary, InvestigationCaseSummary, EvaluationMetric } from '../types';
 import { RiskBadge } from '../components/RiskBadge';
 import { FilingBadge } from '../components/FilingBadge';
+import { alertTypeLabel } from '../labels';
 import {
   BarChart,
   Bar,
@@ -35,7 +36,6 @@ export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<AlertStatsSummary | null>(null);
   const [recentCases, setRecentCases] = useState<InvestigationCaseSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
   const [evaluation, setEvaluation] = useState<EvaluationMetric | null>(null);
 
   useEffect(() => {
@@ -62,24 +62,11 @@ export const Dashboard: React.FC = () => {
     loadData();
   }, []);
 
-  const handleGenerateData = async () => {
-    if (!window.confirm('Generate a new synthetic ledger? This replaces ALL current alerts, investigations and audit logs.')) return;
-    setGenerating(true);
-    try {
-      await apiClient.generateSyntheticAlerts(200, 1500, 42);
-      await apiClient.prioritizeAlerts(50);
-      await loadData();
-    } catch (err) {
-      window.alert(`Could not generate batch. ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      setGenerating(false);
-    }
-  };
 
   const chartColors = ['#6366F1', '#EC4899', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6'];
 
   const typeData = stats
-    ? Object.entries(stats.alert_type_breakdown).map(([name, value]) => ({ name, value }))
+    ? Object.entries(stats.alert_type_breakdown).map(([name, value]) => ({ name: alertTypeLabel(name), value }))
     : [];
 
   const severityData = stats
@@ -91,9 +78,9 @@ export const Dashboard: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Financial Crime Surveillance Dashboard</h1>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">Overview</h1>
           <p className="text-sm text-slate-400 mt-1">
-            Alerts from India-first rules and an Isolation Forest, investigated by agents, decided by evidence, and fact-checked.
+            Today's alerts and cases, and how well the system performs.
           </p>
         </div>
 
@@ -107,12 +94,10 @@ export const Dashboard: React.FC = () => {
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
-            onClick={handleGenerateData}
-            disabled={generating}
-            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold tracking-wide flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition-all"
+            onClick={() => navigate('/investigations')}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold tracking-wide flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition-all"
           >
-            <Play className={`h-3.5 w-3.5 fill-current ${generating ? 'animate-pulse' : ''}`} />
-            {generating ? 'Simulating Batch...' : 'Generate Synthetic Batch'}
+            Review cases
           </button>
         </div>
       </div>
@@ -150,14 +135,14 @@ export const Dashboard: React.FC = () => {
 
         <div className="p-5 rounded-2xl bg-surface border border-slate-800/80 shadow-sm space-y-3">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase tracking-wider">Investigated Cases</span>
+            <span className="text-xs font-mono uppercase tracking-wider">Cases</span>
             <div className="p-2 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-400">
               <FolderSearch className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline justify-between">
             <h3 className="text-3xl font-extrabold text-white font-mono">{stats?.total_cases_investigated || 0}</h3>
-            <span className="text-xs text-emerald-400 font-medium">Multi-Agent</span>
+            <span className="text-xs text-emerald-400 font-medium">Investigated</span>
           </div>
         </div>
 
@@ -178,7 +163,7 @@ export const Dashboard: React.FC = () => {
 
         <div className="p-5 rounded-2xl bg-surface border border-slate-800/80 shadow-sm space-y-3">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase tracking-wider">Monitored Ledger</span>
+            <span className="text-xs font-mono uppercase tracking-wider">Transactions monitored</span>
             <div className="p-2 rounded-lg bg-amber-950/60 border border-amber-500/30 text-amber-400">
               <Activity className="h-4 w-4" />
             </div>
@@ -196,8 +181,8 @@ export const Dashboard: React.FC = () => {
         <div className="p-6 rounded-2xl bg-surface border border-slate-800 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-white">Alert Typology Distribution</h3>
-              <p className="text-xs text-slate-400">Rule-based triggers & ML Isolation Forest anomaly counts</p>
+              <h3 className="text-base font-bold text-white">Alerts by pattern</h3>
+              <p className="text-xs text-slate-400">Which monitoring rule raised each alert</p>
             </div>
             <span className="text-xs font-mono text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-500/30">
               Phase 1 Triage
@@ -222,8 +207,8 @@ export const Dashboard: React.FC = () => {
         <div className="p-6 rounded-2xl bg-surface border border-slate-800 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-white">Severity Classification Funnel</h3>
-              <p className="text-xs text-slate-400">Risk classification before multi-agent investigation</p>
+              <h3 className="text-base font-bold text-white">Alerts by severity</h3>
+              <p className="text-xs text-slate-400">Before investigation</p>
             </div>
             <span className="text-xs font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
               Triage Ranked
@@ -262,55 +247,47 @@ export const Dashboard: React.FC = () => {
       <div className="p-6 rounded-2xl bg-surface border border-slate-800 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-white">Recent Multi-Agent Investigations</h3>
-            <p className="text-xs text-slate-400">Completed forensic cases with deterministic risk assignments</p>
+            <h3 className="text-base font-bold text-white">Recent cases</h3>
+            <p className="text-xs text-slate-400">Newest first — open one to approve or disagree</p>
           </div>
           <button
             onClick={() => navigate('/investigations')}
             className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
           >
-            <span>View All Cases</span>
+            <span>All cases</span>
             <ArrowUpRight className="h-3.5 w-3.5" />
           </button>
         </div>
 
         {recentCases.length === 0 ? (
           <div className="p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-            No investigations run yet. Visit the Alerts Queue and click "Investigate" to launch the agentic graph.
+            No cases yet. Open Alerts and click "Investigate".
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead>
                 <tr className="border-b border-slate-800 text-slate-400 font-mono text-[11px]">
-                  <th className="pb-3">Case ID</th>
-                  <th className="pb-3">Alert Ref</th>
-                  <th className="pb-3">Planner</th>
-                  <th className="pb-3">Iterations</th>
-                  <th className="pb-3">Deterministic Score</th>
-                  <th className="pb-3">Filing Decision</th>
-                  <th className="pb-3 text-right">Action</th>
+                  <th className="pb-3">Customer</th>
+                  <th className="pb-3">Recommendation</th>
+                  <th className="pb-3">Why</th>
+                  <th className="pb-3 text-right"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {recentCases.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3 font-mono font-medium text-indigo-400">{c.case_id}</td>
-                    <td className="py-3 font-mono text-slate-300">{c.alert_id}</td>
-                    <td className="py-3 font-mono text-slate-300 uppercase">{c.planner_mode}</td>
-                    <td className="py-3 font-mono text-slate-400">{c.iterations_count}x</td>
-                    <td className="py-3">
-                      <RiskBadge band={c.final_risk_band} score={c.final_risk_score} size="sm" />
-                    </td>
-                    <td className="py-3">
+                    <td className="py-3 font-semibold text-slate-200 whitespace-nowrap pr-3">{c.subject_name || c.case_id}</td>
+                    <td className="py-3 pr-3">
                       <FilingBadge decision={c.filing_decision} tier={c.filing_tier} />
                     </td>
+                    <td className="py-3 text-slate-400 max-w-md truncate pr-3">{c.headline}</td>
                     <td className="py-3 text-right">
                       <button
                         onClick={() => navigate(`/investigations/${c.case_id}`)}
                         className="px-2.5 py-1 rounded bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-300 font-medium transition-colors"
                       >
-                        Inspect Dossier
+                        Open
                       </button>
                     </td>
                   </tr>

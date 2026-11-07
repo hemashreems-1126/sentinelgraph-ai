@@ -132,6 +132,27 @@ class InvestigationCase(Base):
     @property
     def report_status(self):
         return ((self.sar_narrative_json or {}).get("verification") or {}).get("approval_status")
+
+    @property
+    def subject_name(self):
+        return (self.sar_narrative_json or {}).get("subject_name")
+
+    @property
+    def headline(self):
+        """One plain-English line saying why: the first ground of suspicion, or the reason not to file."""
+        report = self.sar_narrative_json or {}
+        grounds = report.get("grounds_of_suspicion") or []
+        if grounds:
+            return grounds[0].get("description")
+        reasons = (report.get("filing_decision") or {}).get("reasons") or []
+        return reasons[0] if reasons else None
+
+    @property
+    def analyst_review(self):
+        """The latest analyst action on this case (AGREE / DISAGREE / OVERRIDE ...), or None if unreviewed."""
+        if not self.feedback:
+            return None
+        return max(self.feedback, key=lambda f: f.id).feedback_type
     
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)

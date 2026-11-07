@@ -9,7 +9,8 @@ import {
   Cpu,
   ShieldAlert,
   Radio,
-  ExternalLink
+  ExternalLink,
+  SlidersHorizontal
 } from 'lucide-react';
 import { apiClient, isOffline, subscribeOffline } from '../api/client';
 
@@ -28,15 +29,16 @@ export const Layout: React.FC = () => {
     : !health
       ? 'Connecting…'
       : health.llm_mode === 'live_groq'
-        ? 'Live Groq (LLaMA-3.3)'
-        : 'Deterministic (no LLM key)';
+        ? 'AI wording: Groq LLaMA-3.3'
+        : 'AI wording: templates (no LLM key)';
 
   const navItems = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/alerts', label: 'Alerts Queue', icon: BellRing },
-    { to: '/investigations', label: 'Investigations', icon: FolderSearch },
-    { to: '/audit', label: 'Audit Trail', icon: ShieldCheck },
-    { to: '/evaluation', label: 'Model Evaluation', icon: BarChart3 },
+    { to: '/', label: 'Overview', icon: LayoutDashboard },
+    { to: '/investigations', label: 'Cases', icon: FolderSearch },
+    { to: '/alerts', label: 'Alerts', icon: BellRing },
+    { to: '/audit', label: 'Audit trail', icon: ShieldCheck },
+    { to: '/evaluation', label: 'Evaluation', icon: BarChart3 },
+    { to: '/admin', label: 'Demo controls', icon: SlidersHorizontal },
   ];
 
   return (
@@ -51,10 +53,10 @@ export const Layout: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="text-base font-extrabold tracking-tight text-white font-mono">SentinelGraph</span>
               <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-500/30">
-                AI Risk Manager
+                AML Investigation
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">Razorpay AI Buildathon 2026</p>
+            <p className="text-[11px] text-slate-400">Fact-checked investigations for Indian compliance teams</p>
           </div>
         </div>
 
@@ -63,17 +65,17 @@ export const Layout: React.FC = () => {
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono">
             <span className={`h-2 w-2 rounded-full ${!offline && health?.status === 'healthy' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
             <span className="text-slate-300">
-              Engine: <strong className="text-indigo-400">{engineLabel}</strong>
+              <strong className="text-indigo-400">{engineLabel}</strong>
             </span>
           </div>
 
           <a
-            href="https://razorpay.com/buildathon/"
+            href="https://github.com/hemashreems-1126/sentinelgraph-ai"
             target="_blank"
             rel="noreferrer"
             className="hidden md:flex items-center gap-1.5 text-xs text-slate-400 hover:text-indigo-400 transition-colors"
           >
-            <span>Razorpay Track</span>
+            <span>Source code</span>
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </div>
@@ -124,10 +126,10 @@ export const Layout: React.FC = () => {
           <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
               <Cpu className="h-4 w-4 text-indigo-400" />
-              <span>Multi-Agent Stack</span>
+              <span>How it works</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              LangGraph agents investigate; deterministic code scores risk, decides whether to file, and fact-checks every claim in the FIU-IND STR draft.
+              AI agents investigate each alert. Plain code then checks every fact against the transactions and recommends whether to file an STR. You make the final call.
             </p>
           </div>
         </aside>

@@ -104,6 +104,9 @@ export interface InvestigationCaseSummary {
   filing_decision?: 'FILE_STR' | 'NO_FILE' | null;
   filing_tier?: string | null;
   report_status?: string | null;
+  subject_name?: string | null;
+  headline?: string | null;
+  analyst_review?: string | null;
   decision_rationale?: string;
   created_at: string;
   completed_at?: string;

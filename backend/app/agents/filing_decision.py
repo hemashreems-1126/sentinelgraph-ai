@@ -21,6 +21,29 @@ STRONG_ALONE_SCORE = 75.0        # one strong red flag is enough only with a hig
 TIER1_SCORE_THRESHOLD = 80.0
 
 
+# Short plain-English names for red flags, used in analyst-facing reasons.
+FLAG_PLAIN = {
+    "RAPID_PASS_THROUGH": "money passed straight through the account",
+    "MANY_UNRELATED_PAYERS": "many first-time payers in one day",
+    "CASH_BELOW_PAN_THRESHOLD": "cash deposits kept just under ₹50,000",
+    "SPLIT_PAYMENTS_SAME_BENEFICIARY": "repeated split payments to one person",
+    "HIGH_VELOCITY": "a quick burst of transactions",
+    "BEHAVIOUR_OUTLIER": "activity unusual for this account",
+    "ONWARD_LAYERING": "the next account passed the money on too",
+    "DORMANT_ACCOUNT_ACTIVATED": "a quiet account suddenly became busy",
+    "NEW_ACCOUNT_HIGH_ACTIVITY": "a new account moving money for others",
+    "PERSONAL_ACCOUNT_COLLECTION": "a personal account collecting from many people",
+    "CIRCULAR_FLOW": "money going round in a circle",
+    "REPEAT_ALERTS": "earlier alerts on the same account",
+    "PEP_MATCH": "a politically exposed person",
+    "SANCTIONS_MATCH": "a sanctions-list match",
+}
+
+
+def plain(code: str) -> str:
+    return FLAG_PLAIN.get(code, code.replace("_", " ").lower())
+
+
 def decide_filing(risk_score: float, red_flags: List[Dict[str, Any]]) -> Dict[str, Any]:
     strong = [f for f in red_flags if f.get("strength") == "STRONG"]
     codes = {f["code"] for f in red_flags}
@@ -39,18 +62,16 @@ def decide_filing(risk_score: float, red_flags: List[Dict[str, Any]]) -> Dict[st
     if not file_str:
         reasons = []
         if not red_flags:
-            reasons.append("No evidence-backed red flag was found in the suspicious window.")
+            reasons.append("No suspicious pattern was confirmed in the transactions around this alert.")
         else:
-            reasons.append(
-                f"Only {len(red_flags)} red flag(s) found ({', '.join(sorted(codes))}), "
-                f"none strong enough on their own to establish grounds of suspicion."
-            )
+            found = "; ".join(plain(f["code"]) for f in red_flags)
+            reasons.append(f"Only weaker signs were found ({found}).")
         if not strong:
-            reasons.append("No strong red flag (e.g. pass-through, many unrelated payers, cash just under "
-                           "the PAN threshold, split payments) was found.")
+            reasons.append("None of the strong warning signs (money passed straight through, many first-time "
+                           "payers, cash just under ₹50,000, split payments) is present.")
         elif risk_score < STRONG_ALONE_SCORE:
-            reasons.append("A single strong red flag without corroborating evidence and with a moderate risk "
-                           "score is consistent with legitimate activity (e.g. a merchant or rent collection).")
+            reasons.append("One warning sign on its own, with nothing to back it up, fits normal activity too — "
+                           "for example a shop or friends splitting rent.")
         return {
             "decision": "NO_FILE",
             "tier": None,

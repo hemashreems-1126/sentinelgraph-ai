@@ -28,23 +28,43 @@ import { AgentTrailCard } from '../components/AgentTrailCard';
 import { NetworkGraphView } from '../components/NetworkGraphView';
 import { SarReportViewer } from '../components/SarReportViewer';
 import { FeedbackModal } from '../components/FeedbackModal';
+import { CaseSummary } from '../components/CaseSummary';
+import { FilingBadge } from '../components/FilingBadge';
+import { alertTypeLabel, REVIEW_LABEL } from '../labels';
 
 export const InvestigationDetailPage: React.FC = () => {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const [caseData, setCaseData] = useState<InvestigationCaseDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'trail' | 'subagents' | 'hypotheses' | 'sar' | 'audit'>('trail');
+  const [view, setView] = useState<'summary' | 'report' | 'details'>('summary');
+  const [activeTab, setActiveTab] = useState<'trail' | 'subagents' | 'hypotheses' | 'audit' | 'score'>('trail');
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [chain, setChain] = useState<{ valid: boolean; entries: number; reason?: string } | null>(null);
 
   useEffect(() => {
-    if (activeTab !== 'audit' || !caseId) return;
+    if (view !== 'details' || activeTab !== 'audit' || !caseId) return;
     setChain(null);
     apiClient.verifyAuditChain(caseId)
       .then(setChain)
       .catch((err) => setChain({ valid: false, entries: 0, reason: err instanceof Error ? err.message : String(err) }));
-  }, [activeTab, caseId, caseData]);
+  }, [view, activeTab, caseId, caseData]);
+
+  const approve = async () => {
+    if (!caseId) return;
+    setApproving(true);
+    setActionError(null);
+    try {
+      await apiClient.submitFeedback(caseId, { feedback_type: 'AGREE', notes: 'Approved the recommendation.', investigator_id: 'analyst' });
+      await fetchDetail();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setApproving(false);
+    }
+  };
 
   const fetchDetail = async () => {
     if (!caseId) return;
@@ -64,7 +84,7 @@ export const InvestigationDetailPage: React.FC = () => {
   }, [caseId]);
 
   if (loading) {
-    return <div className="p-12 text-center text-slate-400">Loading forensic case dossier...</div>;
+    return <div className="p-12 text-center text-slate-400">Loading case…</div>;
   }
 
   if (!caseData) {
@@ -84,130 +104,136 @@ export const InvestigationDetailPage: React.FC = () => {
   const documentData = subagents.document_data || subagents.document_evidence || subagents.documents || {};
   const intelligenceData = subagents.intelligence_data || subagents.intelligence_evidence || subagents.intelligence || {};
   const reasoning = caseData.reasoning_json || {};
+  const report = caseData.sar_narrative_json || {};
+  const latestReview = [...(caseData.feedback || [])].sort((a, b) => b.id - a.id)[0];
 
   return (
     <div className="space-y-6">
-      {/* Top Breadcrumb & Actions */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => navigate('/investigations')}
-          className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Investigations</span>
-        </button>
+      {/* Top bar */}
+      <button
+        onClick={() => navigate('/investigations')}
+        className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>Back to cases</span>
+      </button>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setFeedbackOpen(true)}
-            className="px-4 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-semibold flex items-center gap-2 transition-all shadow-sm"
-          >
-            <UserCheck className="h-4 w-4" />
-            <span>Investigator Decision / Override</span>
-          </button>
+      {/* Case header: who, what, and the analyst's two actions */}
+      <div className="p-5 rounded-2xl bg-surface border border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="space-y-1.5">
+          <h2 className="text-xl font-extrabold text-white">{report.subject_name || 'Unknown customer'}</h2>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <FilingBadge decision={report.filing_decision?.decision} tier={report.filing_decision?.tier} />
+            <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-300">{alertTypeLabel(report.alert_type)}</span>
+            {(report.subject_accounts || []).map((a: string) => (
+              <span key={a} className="font-mono text-slate-400">{a}</span>
+            ))}
+          </div>
+          <p className="text-[11px] text-slate-500 font-mono">
+            {caseData.case_id} · alert {caseData.alert_id} · {new Date(caseData.created_at).toLocaleString()}
+          </p>
+          {latestReview && (
+            <p className="text-xs text-indigo-300">
+              Reviewed: <strong>{REVIEW_LABEL[latestReview.feedback_type] ?? latestReview.feedback_type}</strong>
+              {latestReview.notes ? ` — “${latestReview.notes}”` : ''}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col items-stretch md:items-end gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={approve}
+              disabled={approving}
+              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-bold flex items-center gap-2"
+            >
+              <UserCheck className="h-4 w-4" />
+              {approving ? 'Saving…' : 'Approve'}
+            </button>
+            <button
+              onClick={() => setFeedbackOpen(true)}
+              className="px-4 py-2 rounded-xl bg-surface border border-slate-600 hover:border-slate-400 text-slate-200 text-sm font-semibold"
+            >
+              Disagree…
+            </button>
+          </div>
+          {actionError && <p className="text-xs text-rose-300 max-w-sm md:text-right"><strong>Not saved.</strong> {actionError}</p>}
         </div>
       </div>
 
-      {/* Case Header Hero Box */}
-      <div className="p-6 rounded-2xl bg-surface border border-slate-800 shadow-md space-y-5">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h2 className="text-xl font-extrabold text-white font-mono">{caseData.case_id}</h2>
-              <span className="text-xs font-mono px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                Alert: {caseData.alert_id}
-              </span>
-              <span className="text-xs font-mono px-2.5 py-1 rounded bg-indigo-950/80 text-indigo-400 border border-indigo-500/30 uppercase">
-                Planner: {caseData.planner_mode}
-              </span>
-              {caseData.iterations_count > 1 && (
-                <span className="text-xs font-mono px-2.5 py-1 rounded bg-amber-950/80 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                  <RotateCcw className="h-3 w-3" />
-                  {caseData.iterations_count} Loops Triggered
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-400 mt-1 font-mono">
-              Initialized: {new Date(caseData.created_at).toLocaleString()} • Status: <span className="text-emerald-400 font-semibold">{caseData.status}</span>
-            </p>
-          </div>
+      {/* Views */}
+      <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+        {([
+          ['summary', 'Summary', Sparkles],
+          ['report', 'STR report', FileSpreadsheet],
+          ['details', 'Technical details', Layers],
+        ] as const).map(([key, label, Icon]) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              view === key ? 'bg-indigo-600 text-white' : 'bg-surface text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Deterministic Risk</span>
+      {view === 'summary' && <CaseSummary caseData={caseData} />}
+
+      {view === 'details' && (
+        <div className="space-y-1">
+          <p className="text-xs text-slate-500">How the system reached its answer — for reviewers and auditors.</p>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {([
+              ['trail', `Agent steps (${caseData.agent_trail_json?.length || 0})`, Bot],
+              ['subagents', 'Evidence collected', Network],
+              ['hypotheses', 'Hypotheses', BrainCircuit],
+              ['score', 'Risk score', Calculator],
+              ['audit', `Audit chain (${caseData.audit_logs?.length || 0})`, ShieldCheck],
+            ] as const).map(([key, label, Icon]) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 border ${
+                  activeTab === key ? 'border-indigo-500 text-indigo-200 bg-indigo-950/60' : 'border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {view === 'details' && activeTab === 'score' && (
+        <div className="p-5 rounded-2xl bg-surface border border-slate-800 space-y-3">
+          <div className="flex flex-wrap items-center gap-6">
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Weighted risk score</span>
               <RiskBadge band={caseData.final_risk_band} score={caseData.final_risk_score} size="lg" />
             </div>
-            <div className="text-right">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Transaction Policy (risk band)</span>
-              <DecisionBadge decision={caseData.final_decision} size="lg" />
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Transaction policy (from score band)</span>
+              {['ALLOW', 'REVIEW', 'BLOCK'].includes(caseData.final_decision)
+                ? <DecisionBadge decision={caseData.final_decision} size="lg" />
+                : <span className="text-sm text-slate-300">Set by analyst: {caseData.final_decision}</span>}
             </div>
           </div>
+          <p className="text-xs text-slate-400">
+            The score is used to set the report's urgency tier. Whether to file is decided from the verified evidence, not from the score alone.
+          </p>
+          {caseData.decision_rationale && (
+            <p className="p-3 bg-background rounded-xl border border-slate-800 text-xs font-mono text-slate-300">{caseData.decision_rationale}</p>
+          )}
         </div>
-
-        {/* Deterministic Mathematical Rationale Callout */}
-        {caseData.decision_rationale && (
-          <div className="p-3.5 bg-background/80 rounded-xl border border-slate-800/80 text-xs font-mono text-slate-300 leading-relaxed">
-            <strong className="text-indigo-400 font-bold block mb-1">DETERMINISTIC PYTHON RISK RATIONALE:</strong>
-            {caseData.decision_rationale}
-          </div>
-        )}
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
-        <button
-          onClick={() => setActiveTab('trail')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'trail' ? 'bg-indigo-600 text-white' : 'bg-surface text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Layers className="h-4 w-4" />
-          <span>Full Agent Trail ({caseData.agent_trail_json?.length || 0})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('subagents')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'subagents' ? 'bg-indigo-600 text-white' : 'bg-surface text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Network className="h-4 w-4" />
-          <span>Sub-Agent Evidence & Graph</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('hypotheses')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'hypotheses' ? 'bg-indigo-600 text-white' : 'bg-surface text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <BrainCircuit className="h-4 w-4" />
-          <span>Hypotheses & Reasoning</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('sar')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'sar' ? 'bg-indigo-600 text-white' : 'bg-surface text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <FileSpreadsheet className="h-4 w-4" />
-          <span>STR Decision & Report</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('audit')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'audit' ? 'bg-indigo-600 text-white' : 'bg-surface text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <ShieldCheck className="h-4 w-4" />
-          <span>Audit Chain ({caseData.audit_logs?.length || 0})</span>
-        </button>
-      </div>
+      )}
 
       {/* Tab 1: Full Per-Agent Step Trail */}
-      {activeTab === 'trail' && (
+      {view === 'details' && activeTab === 'trail' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
@@ -225,7 +251,7 @@ export const InvestigationDetailPage: React.FC = () => {
       )}
 
       {/* Tab 2: Sub-Agent Evidence & Graph */}
-      {activeTab === 'subagents' && (
+      {view === 'details' && activeTab === 'subagents' && (
         <div className="space-y-6">
           {/* Network Graph Section */}
           <div className="p-6 bg-surface rounded-2xl border border-slate-800 space-y-4">
@@ -276,7 +302,7 @@ export const InvestigationDetailPage: React.FC = () => {
       )}
 
       {/* Tab 3: Hypotheses & Forensic Reasoning */}
-      {activeTab === 'hypotheses' && (
+      {view === 'details' && activeTab === 'hypotheses' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {caseData.hypotheses?.map((h) => (
@@ -308,7 +334,7 @@ export const InvestigationDetailPage: React.FC = () => {
       )}
 
       {/* Tab 4: STR Decision & Report */}
-      {activeTab === 'sar' && (
+      {view === 'report' && (
         <SarReportViewer
           reportText={caseData.sar_report_text}
           sarJson={caseData.sar_narrative_json}
@@ -317,7 +343,7 @@ export const InvestigationDetailPage: React.FC = () => {
       )}
 
       {/* Tab 5: Hash-chained audit trail */}
-      {activeTab === 'audit' && (
+      {view === 'details' && activeTab === 'audit' && (
         <div className="bg-surface border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-slate-800 bg-surface-light/20 flex items-center justify-between">
             <h4 className="text-xs font-mono uppercase tracking-wider text-slate-300 font-bold">
@@ -363,7 +389,7 @@ export const InvestigationDetailPage: React.FC = () => {
       {/* Human Feedback Modal */}
       <FeedbackModal
         caseId={caseData.case_id}
-        currentDecision={caseData.final_decision}
+        filingDecision={report.filing_decision?.decision}
         isOpen={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
         onSubmitted={fetchDetail}

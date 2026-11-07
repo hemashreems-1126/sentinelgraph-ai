@@ -222,7 +222,7 @@ def build_fact_sheet(state: Dict[str, Any]) -> Dict[str, Any]:
     if len(window_txns) >= 2:
         n = len(window_txns)
         mins = compute_transaction_metric("time_span_minutes", window_txns)
-        if mins <= 1440:
+        if mins <= 120:
             text = f"These {n} transactions took place within {int(mins)} minutes."
             a = make_assertion("time_span_minutes", mins)
         elif mins > 72 * 60:
@@ -387,8 +387,7 @@ def build_fact_sheet(state: Dict[str, Any]) -> Dict[str, Any]:
     behaviour = state.get("behavior_data") or {}
     if behaviour.get("is_statistical_outlier"):
         red_flags.append({"code": "BEHAVIOUR_OUTLIER", "strength": "MODERATE",
-                          "description": "Activity is far outside this account's own pattern for the previous month "
-                                         "(see Behaviour agent statistics).",
+                          "description": "This activity is far outside the account's own pattern over the previous weeks.",
                           "claim_id": None})
     if prior_count is not None and prior_count <= 2 and moving_money:
         red_flags.append({"code": "DORMANT_ACCOUNT_ACTIVATED", "strength": "MODERATE",

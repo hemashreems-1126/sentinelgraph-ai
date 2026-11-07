@@ -13,7 +13,7 @@
 [![API Docs](https://img.shields.io/badge/📑%20Backend%20API-Swagger%20Docs-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://sentinelgraph-backend-yeci.onrender.com/docs)
 (free hosting — the first request can take ~1 minute while the server wakes up)
 
-![STR draft for a UPI mule account — every claim verified against the ledger](docs/screenshots/str_upi_mule.png)
+![Case summary for a UPI mule account — every fact verified against the ledger](docs/screenshots/str_upi_mule.png)
 
 ---
 
@@ -70,8 +70,24 @@ flowchart LR
 The **LLM is optional** (Groq / LLaMA-3.3). Without a key, every step uses deterministic logic. With a key, the LLM can re-word
 claims and the narrative, but it never decides a number, a score, a filing decision or a fact.
 
-| Fact-checked STR (UPI mule) | Documented "don't file" memo |
+### What the analyst sees
+
+The app is built around the analyst's actual job: **open the next case, see the answer and why, approve or disagree.**
+
+- **Cases inbox:** most urgent first (Tier 1 → Tier 3 → "don't file"), one line per case saying who, the recommendation and why.
+- **Case summary:** the recommendation, the reasons in plain English, every fact with a ✓ verified mark, and where the money went. **Approve** and **Disagree** are one click away; a disagreement asks only "should / shouldn't be filed" or "a fact is wrong", plus a reason.
+- **Technical details** (agent steps, evidence, hypotheses, risk score, audit chain) are one click further, for reviewers and auditors.
+- Demo-only actions (generate data, re-rank, choose the investigation plan) live on a separate **Demo controls** page.
+
+| Cases inbox | Case summary (UPI mule, file STR) |
 |---|---|
+| ![](docs/screenshots/cases_inbox.png) | ![](docs/screenshots/str_upi_mule.png) |
+
+| "Don't file" with written reasons | Hash-chained audit trail |
+|---|---|
+| ![](docs/screenshots/no_file_memo.png) | ![](docs/screenshots/audit_chain.png) |
+
+---|---|
 | ![](docs/screenshots/str_upi_mule.png) | ![](docs/screenshots/no_file_memo.png) |
 
 | Money-flow network | Hash-chained audit trail |
@@ -206,4 +222,4 @@ legitimate look-alikes, a hash-chained audit log, Alembic migrations and Postgre
 
 ## License
 
-MIT. Built for the Razorpay AI Buildathon 2026 (AI Risk Manager track). All data is synthetic; any resemblance to real people is coincidental.
+MIT. A personal project. All data is synthetic; any resemblance to real people is coincidental.
