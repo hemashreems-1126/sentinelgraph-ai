@@ -23,7 +23,7 @@ const getBaseUrl = () => {
   const metaEnv = (import.meta as any).env;
   if (metaEnv && metaEnv.VITE_API_BASE_URL) return metaEnv.VITE_API_BASE_URL;
   if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
-    return 'https://sentinelgraph-backend.onrender.com/api';
+    return 'https://sentinelgraph-backend-yeci.onrender.com/api';
   }
   return '/api';
 };
