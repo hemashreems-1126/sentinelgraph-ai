@@ -37,3 +37,7 @@ class AlertGenerateRequest(BaseModel):
     num_customers: int = Field(default=200, ge=10, le=2000)
     num_transactions: int = Field(default=1500, ge=50, le=10000)
     seed: int = 42
+    confirm_reset: bool = Field(
+        default=False,
+        description="Must be true: generating a new ledger deletes all existing alerts, cases and audit logs.",
+    )

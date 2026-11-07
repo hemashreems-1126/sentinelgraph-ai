@@ -4,6 +4,10 @@ from sqlalchemy.orm import Session
 from app.db.models import Customer, Account, Transaction
 
 
+MAX_DIRECT_NODES = 25
+MAX_DISPLAY_NODES = 60
+
+
 class FinancialGraphStore:
     """
     NetworkX in-memory Graph Store for Transaction and Entity Relationship Analysis.
@@ -14,8 +18,21 @@ class FinancialGraphStore:
     def __init__(self):
         self.graph = nx.DiGraph()
         self._is_built = False
+        self._fingerprint = None
 
-    def build_graph(self, db: Session, force_rebuild: bool = True):
+    def invalidate(self):
+        """Force the next build_graph() call to rebuild (called after re-seeding data)."""
+        self._is_built = False
+        self._fingerprint = None
+
+    def build_graph(self, db: Session, force_rebuild: bool = False):
+        # Rebuilding the whole graph for every investigation is slow; only rebuild when the
+        # ledger has changed (row counts + latest transaction id).
+        last = db.query(Transaction.txn_id).order_by(Transaction.id.desc()).first()
+        fingerprint = (db.query(Transaction).count(), db.query(Account).count(), last[0] if last else None)
+        if self._is_built and not force_rebuild and fingerprint == self._fingerprint:
+            return
+        self._fingerprint = fingerprint
         self.graph.clear()
 
         # 1. Add Accounts & Customers as Nodes
@@ -89,14 +106,9 @@ class FinancialGraphStore:
         out_deg = sub_g.out_degree(account_id)
         deg_centrality = nx.degree_centrality(sub_g).get(account_id, 0.0)
 
-        # Fast O(V+E) cycle detection containing target account
+        # Circular flow is decided by the time-respecting check in the Graph agent
+        # (services/round_trip.py); a plain structural loop is not evidence of round-tripping.
         has_cycles = False
-        try:
-            # Check if there is a cycle reachable from or containing account_id
-            cycle = nx.find_cycle(sub_g, source=account_id, orientation="original")
-            has_cycles = len(cycle) > 0
-        except Exception:
-            has_cycles = False
 
         # Identify high risk / watchlist nodes in graph (limit to 10 for performance)
         high_risk_nodes = [
@@ -127,9 +139,31 @@ class FinancialGraphStore:
             )
         )
 
-        # 3. Format Subgraph for UI Visualization
+        # 3. Display subgraph: a 2-hop neighbourhood can hold hundreds of accounts, which is unreadable
+        #    and bloats every stored copy of the case. Keep the target, its strongest direct
+        #    counterparties and their strongest links (by money flowed) — metrics above use the full graph.
+        def flow(u, v):
+            return sub_g[u][v].get("total_amount", 0.0)
+
+        direct = sorted(
+            set(sub_g.successors(account_id)) | set(sub_g.predecessors(account_id)),
+            key=lambda n: -(flow(account_id, n) if sub_g.has_edge(account_id, n) else 0.0)
+                          - (flow(n, account_id) if sub_g.has_edge(n, account_id) else 0.0),
+        )[:MAX_DIRECT_NODES]
+        keep = {account_id, *direct}
+        for n in direct:
+            nbrs = sorted(
+                (set(sub_g.successors(n)) | set(sub_g.predecessors(n))) - keep,
+                key=lambda m: -max(flow(n, m) if sub_g.has_edge(n, m) else 0.0, flow(m, n) if sub_g.has_edge(m, n) else 0.0),
+            )
+            for m in nbrs[:3]:
+                if len(keep) >= MAX_DISPLAY_NODES:
+                    break
+                keep.add(m)
+        disp_g = sub_g.subgraph(keep)
+
         nodes_list = []
-        for n, attr in sub_g.nodes(data=True):
+        for n, attr in disp_g.nodes(data=True):
             nodes_list.append({
                 "id": n,
                 "label": attr.get("customer_name", n),
@@ -141,11 +175,11 @@ class FinancialGraphStore:
             })
 
         edges_list = []
-        for u, v, attr in sub_g.edges(data=True):
+        for u, v, attr in disp_g.edges(data=True):
             edges_list.append({
                 "source": u,
                 "target": v,
-                "amount": attr.get("total_amount", 0.0),
+                "amount": round(attr.get("total_amount", 0.0), 2),
                 "count": attr.get("count", 1),
                 "txn_type": attr.get("txn_type", "TRANSFER")
             })
@@ -154,6 +188,7 @@ class FinancialGraphStore:
             "nodes": nodes_list,
             "edges": edges_list,
             "total_counterparties": len(subgraph_nodes) - 1,
+            "display_note": f"Showing {len(nodes_list)} of {len(subgraph_nodes)} accounts in the 2-hop network (strongest money flows).",
             "high_risk_connections_count": hr_count,
             "shortest_path_to_watchlist": shortest_path_str,
             "has_cycles": has_cycles,

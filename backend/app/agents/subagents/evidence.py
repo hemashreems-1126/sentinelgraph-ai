@@ -45,9 +45,9 @@ def evidence_retrieval_node(state: InvestigationState) -> InvestigationState:
                 "amount": t.amount,
                 "type": t.txn_type,
                 "channel": t.channel,
-                "timestamp": t.timestamp.isoformat(),
-                "is_fraud_injected": t.is_fraud_injected,
-                "fraud_pattern_type": t.fraud_pattern_type
+                "timestamp": t.timestamp.isoformat()
+                # Ground-truth labels (is_fraud_injected, fraud_pattern_type) are deliberately
+                # NOT exposed to agents or the LLM — they are only for evaluation.
             }
             for t in txns[:20]
         ]
@@ -70,7 +70,7 @@ def evidence_retrieval_node(state: InvestigationState) -> InvestigationState:
         "action": "EVIDENCE_RETRIEVED",
         "status": "COMPLETED",
         "duration_ms": duration_ms,
-        "summary": f"Retrieved {len(txns)} transactions (Inflow: ${total_inflow:,.2f}, Outflow: ${total_outflow:,.2f}) and {prior_alerts_count} historical alerts.",
+        "summary": f"Retrieved {len(txns)} transactions (Inflow: ₹{total_inflow:,.2f}, Outflow: ₹{total_outflow:,.2f}) and {prior_alerts_count} historical alerts.",
         "details": evidence_data,
         "timestamp": datetime.datetime.utcnow().isoformat()
     }

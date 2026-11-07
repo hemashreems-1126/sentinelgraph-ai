@@ -1,48 +1,153 @@
 {
-  "run_id": "EVAL_8DA048D4",
-  "timestamp": "2026-08-26T20:45:19.775798",
-  "split_type": "TEST",
-  "total_samples": 256,
-  "true_positives": 36,
-  "false_positives": 51,
-  "true_negatives": 169,
-  "false_negatives": 0,
-  "precision_score": 0.4138,
-  "recall_score": 1.0,
-  "f1_score": 0.5854,
-  "accuracy_score": 0.8008,
-  "roc_auc": 0.9917,
-  "confusion_matrix_json": {
-    "true_positives": 36,
-    "false_positives": 51,
-    "true_negatives": 169,
-    "false_negatives": 0
-  },
-  "classification_report_json": {
-    "0": {
-      "precision": 1.0,
-      "recall": 0.7681818181818182,
-      "f1-score": 0.8688946015424165,
-      "support": 220.0
-    },
-    "1": {
-      "precision": 0.41379310344827586,
-      "recall": 1.0,
-      "f1-score": 0.5853658536585366,
-      "support": 36.0
-    },
-    "accuracy": 0.80078125,
-    "macro avg": {
-      "precision": 0.7068965517241379,
-      "recall": 0.884090909090909,
-      "f1-score": 0.7271302276004765,
-      "support": 256.0
-    },
-    "weighted avg": {
-      "precision": 0.9175646551724138,
-      "recall": 0.80078125,
-      "f1-score": 0.8290233713712458,
-      "support": 256.0
+  "run_id": "EVAL_A2EB5ED1",
+  "dataset": "synthetic-india-v2",
+  "split": "TEST",
+  "seed": 42,
+  "runtime_seconds": 22.7,
+  "ground_truth": "Alert subject account is controlled by the synthetic criminal network (victims, feeders and legitimate look-alikes are negatives).",
+  "detection": {
+    "alerts_evaluated": 351,
+    "alert_precision": 0.792,
+    "controlled_accounts": 499,
+    "controlled_account_coverage": 0.8758,
+    "by_alert_type": {
+      "FAN_IN_AGGREGATION": {
+        "alerts": 60,
+        "true_suspicious": 43,
+        "precision": 0.7167
+      },
+      "FAN_OUT_DISPERSION": {
+        "alerts": 15,
+        "true_suspicious": 8,
+        "precision": 0.5333
+      },
+      "ISOLATION_FOREST": {
+        "alerts": 115,
+        "true_suspicious": 87,
+        "precision": 0.7565
+      },
+      "LAYERING": {
+        "alerts": 37,
+        "true_suspicious": 37,
+        "precision": 1.0
+      },
+      "MULE_ACCOUNT": {
+        "alerts": 65,
+        "true_suspicious": 59,
+        "precision": 0.9077
+      },
+      "STRUCTURING": {
+        "alerts": 22,
+        "true_suspicious": 21,
+        "precision": 0.9545
+      },
+      "UPI_MULE_CHAIN": {
+        "alerts": 20,
+        "true_suspicious": 12,
+        "precision": 0.6
+      },
+      "VELOCITY_ABUSE": {
+        "alerts": 17,
+        "true_suspicious": 11,
+        "precision": 0.6471
+      }
     }
+  },
+  "filing": {
+    "cases_investigated": 196,
+    "confusion": {
+      "true_positives": 103,
+      "false_positives": 16,
+      "false_negatives": 37,
+      "true_negatives": 40
+    },
+    "precision": 0.8655,
+    "recall": 0.7357,
+    "f1": 0.7953,
+    "accuracy": 0.7296,
+    "risk_score_roc_auc": 0.5619,
+    "alert_reduction_rate": 0.3929,
+    "hard_negative_cases": 52,
+    "hard_negative_false_file_rate": 0.3077,
+    "tier_distribution": {
+      "TIER_2_PRIORITY": 88,
+      "TIER_1_URGENT": 25,
+      "TIER_3_ROUTINE": 6
+    },
+    "avg_seconds_per_case": 0.066,
+    "by_alert_type": {
+      "FAN_IN_AGGREGATION": {
+        "cases": 36,
+        "filed": 24,
+        "true_suspicious": 19,
+        "correct": 29
+      },
+      "FAN_OUT_DISPERSION": {
+        "cases": 15,
+        "filed": 0,
+        "true_suspicious": 8,
+        "correct": 7
+      },
+      "ISOLATION_FOREST": {
+        "cases": 34,
+        "filed": 14,
+        "true_suspicious": 23,
+        "correct": 17
+      },
+      "LAYERING": {
+        "cases": 25,
+        "filed": 20,
+        "true_suspicious": 25,
+        "correct": 20
+      },
+      "MULE_ACCOUNT": {
+        "cases": 27,
+        "filed": 18,
+        "true_suspicious": 21,
+        "correct": 24
+      },
+      "STRUCTURING": {
+        "cases": 22,
+        "filed": 22,
+        "true_suspicious": 21,
+        "correct": 21
+      },
+      "UPI_MULE_CHAIN": {
+        "cases": 20,
+        "filed": 17,
+        "true_suspicious": 12,
+        "correct": 15
+      },
+      "VELOCITY_ABUSE": {
+        "cases": 17,
+        "filed": 4,
+        "true_suspicious": 11,
+        "correct": 10
+      }
+    }
+  },
+  "fact_check": {
+    "genuine_reports": 196,
+    "mean_grounding_rate": 1.0,
+    "genuine_reports_ready": 1.0,
+    "mean_completeness_5w1h": 0.9957,
+    "corrupted_reports_tested": 980,
+    "corruption_catch_rate": 0.999,
+    "catch_rate_by_corruption": {
+      "fabricated_evidence_id": 1.0,
+      "inflated_value": 1.0,
+      "number_added_to_text": 0.9949,
+      "number_in_free_text": 1.0,
+      "unsupported_claim": 1.0
+    }
+  },
+  "load_stats": {
+    "num_customers": 1000,
+    "num_accounts": 1290,
+    "total_transactions": 19463,
+    "injected_fraud_transactions": 2121,
+    "fraud_ratio": 0.109,
+    "fraud_controlled_accounts": 499,
+    "seed": 42
   }
 }

@@ -11,14 +11,25 @@ import {
   Radio,
   ExternalLink
 } from 'lucide-react';
-import { apiClient } from '../api/client';
+import { apiClient, isOffline, subscribeOffline } from '../api/client';
 
 export const Layout: React.FC = () => {
   const [health, setHealth] = useState<{ status: string; llm_mode: string; groq_model: string } | null>(null);
+  const [offline, setOffline] = useState(isOffline());
 
   useEffect(() => {
-    apiClient.getHealth().then(setHealth).catch(() => setHealth({ status: 'offline', llm_mode: 'unknown', groq_model: 'unknown' }));
+    const unsubscribe = subscribeOffline(setOffline);
+    apiClient.getHealth().then(setHealth).catch(() => setHealth({ status: 'error', llm_mode: 'unknown', groq_model: 'unknown' }));
+    return () => { unsubscribe(); };
   }, []);
+
+  const engineLabel = offline
+    ? 'Offline snapshot'
+    : !health
+      ? 'Connecting…'
+      : health.llm_mode === 'live_groq'
+        ? 'Live Groq (LLaMA-3.3)'
+        : 'Deterministic (no LLM key)';
 
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -50,9 +61,9 @@ export const Layout: React.FC = () => {
         <div className="flex items-center gap-4">
           {/* Health / LLM Status Badge */}
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono">
-            <span className={`h-2 w-2 rounded-full ${health?.status === 'healthy' ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'}`} />
+            <span className={`h-2 w-2 rounded-full ${!offline && health?.status === 'healthy' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
             <span className="text-slate-300">
-              Engine: <strong className="text-indigo-400">{health?.llm_mode === 'live_groq' ? 'Live Groq (LLaMA-3.3)' : 'Deterministic Mock'}</strong>
+              Engine: <strong className="text-indigo-400">{engineLabel}</strong>
             </span>
           </div>
 
@@ -67,6 +78,18 @@ export const Layout: React.FC = () => {
           </a>
         </div>
       </header>
+
+      {offline && (
+        <div className="px-6 py-2 bg-amber-950/70 border-b border-amber-600/40 text-amber-200 text-xs">
+          <strong>Offline mode:</strong> the SentinelGraph server cannot be reached, so you are viewing a read-only
+          snapshot exported from a real run. Actions (investigate, sign-off, evaluation) are disabled until it is back.
+        </div>
+      )}
+      {!health && !offline && (
+        <div className="px-6 py-2 bg-slate-900 border-b border-slate-800 text-slate-400 text-xs">
+          Connecting to the server… free hosting can take up to a minute to wake up.
+        </div>
+      )}
 
       {/* App Body with Sidebar */}
       <div className="flex-1 flex overflow-hidden">
@@ -104,7 +127,7 @@ export const Layout: React.FC = () => {
               <span>Multi-Agent Stack</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              11-Stage LangGraph architecture with deterministic Python risk scoring & FinCEN SAR drafting.
+              LangGraph agents investigate; deterministic code scores risk, decides whether to file, and fact-checks every claim in the FIU-IND STR draft.
             </p>
           </div>
         </aside>

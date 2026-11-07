@@ -24,6 +24,8 @@ class InvestigationState(TypedDict):
     # Phase 3: Reasoning, Decision & Governance
     reasoning_output: Dict[str, Any]
     risk_evaluation: Dict[str, Any]
+    fact_sheet: Dict[str, Any]        # deterministic evidence-linked claims + red flags
+    filing_decision: Dict[str, Any]   # FILE_STR (with tier) or NO_FILE (with memo)
     sar_report: Dict[str, Any]
     
     # Flow Control & Iteration (Loop-back)

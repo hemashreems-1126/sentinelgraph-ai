@@ -9,6 +9,13 @@ echo          SentinelGraph Multi-Agent Financial Crime Platform
 echo ======================================================================
 echo.
 
+:: Ensure backend dependencies exist
+python -c "import fastapi, langgraph, alembic, sklearn" >nul 2>nul
+if !ERRORLEVEL! neq 0 (
+    echo [Initial Clone Setup] Installing backend packages... (One-time)
+    python -m pip install -r "%~dp0backend\requirements.txt"
+)
+
 :: Ensure frontend dependencies exist
 if not exist "%~dp0frontend\node_modules" (
     echo [Initial Clone Setup] Installing frontend packages... (One-time, ~20s)

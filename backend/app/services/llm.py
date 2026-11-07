@@ -172,8 +172,8 @@ class GroqLLMService:
             return [
                 {
                     "hypothesis_id": "H1",
-                    "title": "Deliberate Cash Structuring (Smurfing) to Evade CTR Thresholds",
-                    "description": f"Subject {cust_name} is orchestrating consecutive cash/wire deposits just beneath the $10,000 regulatory reporting threshold to conceal source of funds.",
+                    "title": "Deliberate Cash Structuring (Smurfing) to Avoid PAN Reporting",
+                    "description": f"Subject {cust_name} is orchestrating repeated cash deposits just beneath the ₹50,000 PAN-quoting threshold to avoid identification and conceal the source of funds.",
                     "probability": 0.72,
                     "type": "SUSPICIOUS"
                 },
@@ -199,6 +199,30 @@ class GroqLLMService:
                     "title": "Inter-Company Liquidity Rebalancing",
                     "description": "Automated internal treasury transfers across corporate subsidiary accounts for payroll or liquidity optimization.",
                     "probability": 0.22,
+                    "type": "LEGITIMATE"
+                }
+            ]
+        elif alert_type == "UPI_MULE_CHAIN":
+            return [
+                {
+                    "hypothesis_id": "H1",
+                    "title": "UPI Money-Mule Account Collecting Scam Proceeds",
+                    "description": "Many unrelated payers sent small UPI amounts that were moved onward within minutes — consistent with a mule account receiving fraud victims' money.",
+                    "probability": 0.8,
+                    "type": "SUSPICIOUS"
+                },
+                {
+                    "hypothesis_id": "H2",
+                    "title": "Account Holder is a Tricked or Recruited Victim",
+                    "description": "The holder may have lent or sold account access (e.g. a fake 'job' offer) without understanding it — suspicious flow, but the response may differ (freeze and warn vs. criminal referral).",
+                    "probability": 0.15,
+                    "type": "SUSPICIOUS"
+                },
+                {
+                    "hypothesis_id": "H3",
+                    "title": "Legitimate Small Merchant or Group Collection",
+                    "description": "A small shop or a group collection (e.g. event, rent split) receiving many UPI payments and settling them to a supplier.",
+                    "probability": 0.05,
                     "type": "LEGITIMATE"
                 }
             ]
@@ -317,7 +341,9 @@ class GroqLLMService:
 
         return {
             "synthesis_summary": (
-                f"Multi-agent forensic synthesis reveals strong corroborating evidence supporting H1. "
+                (f"Preliminary synthesis: the evidence leans towards H1 (suspicious). " if is_high_risk
+                 else f"Preliminary synthesis: the evidence does not clearly support H1; a legitimate explanation remains plausible. ")
+                + f"The final file / don't-file decision is made by the deterministic Filing Decision agent from evidence-linked red flags. "
                 f"Graph analysis detected {graph.get('total_counterparties', 0)} counterparties with {graph.get('high_risk_connections_count', 0)} flagged hops. "
                 f"Behavioral z-score velocity stands at {behavior.get('velocity_z_score', 0.0):.2f}, indicating significant statistical deviation from customer baseline."
             ),
@@ -353,74 +379,82 @@ class GroqLLMService:
         }
 
     # 4. SAR / Report Drafting Agent
-    def draft_sar_report(
-        self,
-        case_data: Dict[str, Any],
-        reasoning_data: Dict[str, Any],
-        risk_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        cust = case_data.get("customer", {})
-        alert = case_data.get("alert", {})
-        cust_name = cust.get("full_name", "Subject Entity")
-        cust_id = cust.get("customer_id", "UNKNOWN")
-        alert_type = alert.get("alert_type", "SUSPICIOUS_ACTIVITY")
-        score = risk_data.get("final_risk_score", 75.0)
-        band = risk_data.get("final_risk_band", "HIGH")
-        decision = risk_data.get("final_decision", "BLOCK")
+    # 6. STR narrative drafting — the LLM may only re-word evidence-linked claims
+    MODUS_OPERANDI = {
+        "UPI_MULE_CHAIN": (
+            "Several unrelated individuals transferred small amounts to the subject account through UPI. "
+            "Shortly afterwards the balance was moved onward to other accounts, leaving little behind. "
+            "This is consistent with the account being used as a money-mule conduit for scam proceeds."
+        ),
+        "STRUCTURING": (
+            "Cash was deposited in a series of amounts kept just below the PAN-quoting threshold, which avoids "
+            "identification of the depositor. Splitting deposits this way is a recognised structuring typology."
+        ),
+        "MULE_ACCOUNT": (
+            "A large credit was received and almost the same amount was sent out again soon after, so the account "
+            "acted as a pass-through rather than holding the funds for any stated purpose."
+        ),
+        "LAYERING": (
+            "Funds were passed through a chain of accounts in quick succession, each forwarding most of what it "
+            "received. This obscures the link between where the money came from and where it ends up."
+        ),
+        "VELOCITY_ABUSE": (
+            "A burst of transactions was made within a very short time, which is inconsistent with ordinary "
+            "personal or business activity and suggests automated or coordinated movement of funds."
+        ),
+        "FAN_IN_AGGREGATION": (
+            "Funds from many different accounts were collected into the subject account, a pattern used to pool "
+            "proceeds before moving them on."
+        ),
+        "FAN_OUT_DISPERSION": (
+            "Funds were spread from the subject account to many different beneficiaries, a pattern used to break up "
+            "proceeds and make them harder to trace."
+        ),
+    }
 
-        if not self.is_mock:
+    def draft_str_narrative(
+        self,
+        fact_sheet: Dict[str, Any],
+        alert: Dict[str, Any],
+        customer: Dict[str, Any],
+        decision: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        alert_type = alert.get("alert_type", "ANOMALY")
+        base_claims = [dict(c) for c in fact_sheet.get("claims", [])]
+        modus = self.MODUS_OPERANDI.get(
+            alert_type,
+            "The activity is a statistical outlier compared with the customer's usual behaviour and declared profile.",
+        )
+
+        if not self.is_mock and base_claims:
             try:
-                sys_prompt = "You are a Senior Regulatory Compliance Officer. Draft a formal FinCEN/FIU-style SAR Report narrative in JSON format."
-                usr_prompt = f"""
-                Case Data: {json.dumps(case_data)}
-                Reasoning: {json.dumps(reasoning_data)}
-                Risk Data: {json.dumps(risk_data)}
-                
-                Respond in JSON:
-                {{
-                    "subject_name": "{cust_name}",
-                    "subject_id": "{cust_id}",
-                    "alert_type": "{alert_type}",
-                    "risk_level": "{band}",
-                    "recommended_action": "{decision}",
-                    "executive_summary": "...",
-                    "suspicious_activity_narrative": "...",
-                    "nexus_and_methodology": "...",
-                    "law_enforcement_referral_recommended": {str(score >= 70).lower()},
-                    "requires_human_signoff": true
-                }}
-                """
-                content = self._call_groq(sys_prompt, usr_prompt)
-                return json.loads(content)
+                sys_prompt = (
+                    "You are a compliance officer drafting an STR for FIU-IND. Rewrite each claim in clear, formal "
+                    "English. Keep claim_id, evidence_ids and assertions EXACTLY as given. Use only numbers that "
+                    "appear in that claim's assertions. Do not add new facts. Return JSON."
+                )
+                usr_prompt = json.dumps({
+                    "alert_type": alert_type,
+                    "decision": decision.get("decision"),
+                    "claims": [{k: c[k] for k in ("claim_id", "text", "evidence_ids", "assertions")} for c in base_claims],
+                    "respond_with": {"claims": [{"claim_id": "...", "text": "..."}],
+                                     "modus_operandi": "2-3 sentences, NO numbers"},
+                })
+                parsed = json.loads(self._call_groq(sys_prompt, usr_prompt))
+                rewritten = {c.get("claim_id"): c.get("text") for c in parsed.get("claims", [])}
+                for c in base_claims:
+                    # Only the wording may change; evidence and assertions always come from the fact sheet.
+                    if rewritten.get(c["claim_id"]):
+                        c["text"] = rewritten[c["claim_id"]]
+                return {
+                    "claims": base_claims,
+                    "modus_operandi": parsed.get("modus_operandi") or modus,
+                    "drafted_by": f"llm:{self.model}",
+                }
             except Exception:
                 pass
 
-        # High-Fidelity Deterministic Fallback
-        return {
-            "subject_name": cust_name,
-            "subject_id": cust_id,
-            "alert_type": alert_type,
-            "risk_level": band,
-            "recommended_action": decision,
-            "executive_summary": (
-                f"[DRAFT — REQUIRES COMPLIANCE OFFICER SIGN-OFF] Automated investigation of {alert_type} "
-                f"for subject {cust_name} ({cust_id}) produced a deterministic risk score of {score:.1f}/100 ({band}). "
-                f"Recommended system policy action: {decision}."
-            ),
-            "suspicious_activity_narrative": (
-                f"During the surveillance period, subject {cust_name} engaged in patterned financial flows flagged for {alert_type}. "
-                f"Multi-agent investigation established rapid movement of funds across associated accounts with a velocity z-score "
-                f"deviating +3.14 standard deviations from historical baseline. Total transaction volume involved structured amounts "
-                f"designed to avoid triggering statutory reporting thresholds."
-            ),
-            "nexus_and_methodology": (
-                f"The observed methodology exhibits classic typologies of {alert_type}. Network graph traversal revealed 2-hop "
-                f"proximity to high-risk counterparty nodes, with immediate pass-through velocity indicating mule or layering orchestration. "
-                f"Documentary analysis revealed discrepancies between declared KYC profile ({cust.get('occupation', 'N/A')}) and transactional counterparty industries."
-            ),
-            "law_enforcement_referral_recommended": score >= 71,
-            "requires_human_signoff": True
-        }
+        return {"claims": base_claims, "modus_operandi": modus, "drafted_by": "deterministic-template"}
 
 
 llm_service = GroqLLMService()

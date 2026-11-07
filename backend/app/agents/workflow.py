@@ -18,6 +18,8 @@ from app.agents.reasoning import reasoning_node
 from app.agents.risk_scoring import risk_scoring_node
 from app.agents.auditing import auditing_node
 from app.agents.report_drafter import report_sar_drafting_node
+from app.agents.filing_decision import filing_decision_node
+from app.agents.fact_checker import fact_checker_node
 from app.config import settings
 
 from app.db.session import SessionLocal
@@ -60,7 +62,9 @@ def build_investigation_graph():
     builder.add_node("reasoning", reasoning_node)
     builder.add_node("risk_scoring", risk_scoring_node)
     builder.add_node("auditing", auditing_node)
+    builder.add_node("filing_decision", filing_decision_node)
     builder.add_node("report_drafter", report_sar_drafting_node)
+    builder.add_node("fact_checker", fact_checker_node)
 
     # 2. Sequential & Parallel Flow Edges
     builder.add_edge(START, "supervisor")
@@ -85,9 +89,12 @@ def build_investigation_graph():
     )
 
     # 4. Governance & Outcomes
-    builder.add_edge("risk_scoring", "auditing")
-    builder.add_edge("auditing", "report_drafter")
-    builder.add_edge("report_drafter", END)
+    # risk score -> should we file? -> draft STR / closure memo -> verify every claim -> hash the full trail
+    builder.add_edge("risk_scoring", "filing_decision")
+    builder.add_edge("filing_decision", "report_drafter")
+    builder.add_edge("report_drafter", "fact_checker")
+    builder.add_edge("fact_checker", "auditing")
+    builder.add_edge("auditing", END)
 
     # Memory Checkpointing
     memory = MemorySaver()
@@ -100,7 +107,8 @@ compiled_investigation_graph = build_investigation_graph()
 def execute_investigation_case(
     case_id: str,
     alert_id: str,
-    planner_mode: str = "static"
+    planner_mode: str = "static",
+    persist: bool = True,
 ) -> Dict[str, Any]:
     """
     Executes a complete multi-agent investigation run via LangGraph and persists results to PostgreSQL.
@@ -158,6 +166,8 @@ def execute_investigation_case(
         "assembled_case": {},
         "reasoning_output": {},
         "risk_evaluation": {},
+        "fact_sheet": {},
+        "filing_decision": {},
         "sar_report": {},
         "iteration_count": 0,
         "needs_more_evidence": False,
@@ -168,6 +178,9 @@ def execute_investigation_case(
 
     config = {"configurable": {"thread_id": case_id}}
     final_state = compiled_investigation_graph.invoke(initial_state, config)
+    if not persist:
+        # Evaluation runs investigate hundreds of alerts; don't flood the case list with them.
+        return final_state
 
     # 3. Persist Final Investigation Dossier, Risk Score & SAR Report to DB
     db = SessionLocal()
@@ -251,7 +264,9 @@ def execute_investigation_case(
                 input_payload=a_log.get("input_payload"),
                 output_payload=a_log.get("output_payload"),
                 execution_time_ms=a_log.get("execution_time_ms", 0.0),
-                verification_hash=a_log.get("verification_hash", "0000000000000000")
+                verification_hash=a_log["verification_hash"],
+                prev_hash=a_log["prev_hash"],
+                timestamp=datetime.datetime.fromisoformat(a_log["timestamp"]),
             ))
 
         db.commit()

@@ -52,6 +52,7 @@ export interface AuditLogRow {
   output_payload?: Record<string, any>;
   execution_time_ms: number;
   verification_hash: string;
+  prev_hash?: string;
   timestamp: string;
 }
 
@@ -100,6 +101,9 @@ export interface InvestigationCaseSummary {
   final_risk_score: number;
   final_risk_band: RiskBand;
   final_decision: DecisionPolicy;
+  filing_decision?: 'FILE_STR' | 'NO_FILE' | null;
+  filing_tier?: string | null;
+  report_status?: string | null;
   decision_rationale?: string;
   created_at: string;
   completed_at?: string;
@@ -126,6 +130,46 @@ export interface EvaluationMetric {
     false_negatives: number;
   };
   classification_report_json: Record<string, any>;
+  metrics_json?: EvaluationStages;
+  dataset_name?: string;
+}
+
+export interface EvaluationStages {
+  dataset: string;
+  split: string;
+  runtime_seconds: number;
+  ground_truth: string;
+  detection: {
+    alerts_evaluated: number;
+    alert_precision: number;
+    controlled_accounts: number;
+    controlled_account_coverage: number;
+    by_alert_type: Record<string, { alerts: number; true_suspicious: number; precision: number }>;
+  };
+  filing: {
+    cases_investigated: number;
+    confusion: { true_positives: number; false_positives: number; false_negatives: number; true_negatives: number };
+    precision: number;
+    recall: number;
+    f1: number;
+    accuracy: number;
+    risk_score_roc_auc: number;
+    alert_reduction_rate: number;
+    hard_negative_cases: number;
+    hard_negative_false_file_rate: number;
+    tier_distribution: Record<string, number>;
+    avg_seconds_per_case: number;
+    by_alert_type: Record<string, { cases: number; filed: number; true_suspicious: number; correct: number }>;
+  };
+  fact_check: {
+    genuine_reports: number;
+    mean_grounding_rate: number;
+    genuine_reports_ready: number;
+    mean_completeness_5w1h: number;
+    corrupted_reports_tested: number;
+    corruption_catch_rate: number;
+    catch_rate_by_corruption: Record<string, number>;
+  };
 }
 
 export interface AlertStatsSummary {

@@ -1,9 +1,20 @@
+import zlib
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Any
 from sklearn.ensemble import IsolationForest
 from sqlalchemy.orm import Session
 from app.db.models import Transaction, Alert, Account, Customer
+
+# India-specific thresholds (INR)
+PAN_CASH_THRESHOLD = 50000.0   # PAN must be quoted for cash deposits above this (Rule 114B)
+PAN_THRESHOLD_LOW = 45000.0    # "just under" band used for structuring detection
+UPI_MULE_MIN_SENDERS = 5       # distinct UPI payers into one account within the window
+UPI_MULE_WINDOW_SECS = 24 * 3600
+UPI_MULE_DRAIN_SECS = 2 * 3600
+UPI_MULE_DRAIN_RATIO = 0.80
+FAN_WINDOW_SECS = 24 * 3600
+FAN_MIN_COUNTERPARTIES = 6
 
 
 class TransactionMonitor:
@@ -13,7 +24,7 @@ class TransactionMonitor:
     2. Machine Learning Unsupervised Anomaly Detection (Isolation Forest)
     """
 
-    def __init__(self, contamination: float = 0.08, seed: int = 42):
+    def __init__(self, contamination: float = 0.02, seed: int = 42):
         self.contamination = contamination
         self.seed = seed
         self.iso_forest = IsolationForest(
@@ -45,9 +56,13 @@ class TransactionMonitor:
             receiver_groups.setdefault(t.receiver_account_id, []).append(t)
             sender_groups.setdefault(t.sender_account_id, []).append(t)
 
-        # Rule A: Structuring / Smurfing Detection
+        # Rule A: Structuring / Smurfing Detection (India)
+        # 3+ cash deposits just under ₹50,000 — the amount above which a PAN must be quoted.
         for r_acc, r_txns in receiver_groups.items():
-            near_threshold_txns = [t for t in r_txns if 9000.0 <= t.amount <= 9999.0]
+            near_threshold_txns = [
+                t for t in r_txns
+                if t.txn_type == "CASH_DEPOSIT" and PAN_THRESHOLD_LOW <= t.amount < PAN_CASH_THRESHOLD
+            ]
             if len(near_threshold_txns) >= 3:
                 key = f"STRUCT_{r_acc}"
                 if key not in alert_keys_seen:
@@ -63,7 +78,7 @@ class TransactionMonitor:
                             raw_score=85.5,
                             priority_rank=1,
                             status="PENDING",
-                            trigger_reason=f"Detected {len(near_threshold_txns)} consecutive sub-$10,000 deposits totaling ${sum(t.amount for t in near_threshold_txns):,.2f} within monitoring window.",
+                            trigger_reason=f"Detected {len(near_threshold_txns)} cash deposits just under the ₹50,000 PAN-quoting threshold, totaling ₹{sum(t.amount for t in near_threshold_txns):,.2f}.",
                             features_json={
                                 "sub_threshold_count": len(near_threshold_txns),
                                 "total_amount": sum(t.amount for t in near_threshold_txns),
@@ -124,7 +139,15 @@ class TransactionMonitor:
                         if key not in alert_keys_seen:
                             alert_keys_seen.add(key)
                             cust_id = acc_to_cust.get(acc_id, "UNKNOWN")
-                            is_layering = in_t.fraud_pattern_type == "LAYERING"
+                            # Decide LAYERING vs MULE from observable structure only (never from labels):
+                            # layering = the next account also passes the money on within 2 hours.
+                            out_t = matching_out[0]
+                            next_hop_outs = sender_groups.get(out_t.receiver_account_id, [])
+                            is_layering = any(
+                                0 < (n.timestamp - out_t.timestamp).total_seconds() <= 7200
+                                and n.amount >= out_t.amount * 0.85
+                                for n in next_hop_outs
+                            )
                             alert_type = "LAYERING" if is_layering else "MULE_ACCOUNT"
                             alerts.append(
                                 Alert(
@@ -136,7 +159,7 @@ class TransactionMonitor:
                                     raw_score=89.0 if in_t.amount > 50000 else 78.5,
                                     priority_rank=1,
                                     status="PENDING",
-                                    trigger_reason=f"Pass-through flow: Inbound ${in_t.amount:,.2f} followed by immediate outbound ${matching_out[0].amount:,.2f} within 2 hours.",
+                                    trigger_reason=f"Pass-through flow: Inbound ₹{in_t.amount:,.2f} followed by immediate outbound ₹{matching_out[0].amount:,.2f} within 2 hours.",
                                     features_json={
                                         "inbound_amount": in_t.amount,
                                         "outbound_amount": matching_out[0].amount,
@@ -149,14 +172,24 @@ class TransactionMonitor:
                             )
 
         # Rule D: Fan-In Aggregation Detection
+        def densest_24h(txns, key):
+            """Return the 24h window with the most distinct counterparties (by `key`)."""
+            txns = sorted(txns, key=lambda x: x.timestamp)
+            best = []
+            for i, t in enumerate(txns):
+                window = [x for x in txns[i:] if (x.timestamp - t.timestamp).total_seconds() <= FAN_WINDOW_SECS]
+                if len({key(x) for x in window}) > len({key(x) for x in best}):
+                    best = window
+            return best
+
         for r_acc, r_txns in receiver_groups.items():
-            unique_senders = set(t.sender_account_id for t in r_txns)
-            if len(unique_senders) >= 6:
+            window = densest_24h(r_txns, lambda x: x.sender_account_id)
+            unique_senders = {t.sender_account_id for t in window}
+            if len(unique_senders) >= FAN_MIN_COUNTERPARTIES:
                 key = f"FANIN_{r_acc}"
                 if key not in alert_keys_seen:
                     alert_keys_seen.add(key)
-                    cust_id = acc_to_cust.get(r_acc, "UNKNOWN")
-                    total_agg = sum(t.amount for t in r_txns)
+                    total_agg = sum(t.amount for t in window)
                     alerts.append(
                         Alert(
                             alert_id=f"ALT_FIN_{len(alerts)+1:04d}",
@@ -164,27 +197,28 @@ class TransactionMonitor:
                             entity_id=r_acc,
                             alert_type="FAN_IN_AGGREGATION",
                             severity="CRITICAL" if total_agg > 80000 else "HIGH",
-                            raw_score=87.0,
-                            priority_rank=1,
+                            raw_score=80.0,
+                            priority_rank=2,
                             status="PENDING",
-                            trigger_reason=f"Fan-In Aggregation: {len(unique_senders)} distinct feeder accounts concentrated ${total_agg:,.2f} into single account.",
+                            trigger_reason=f"Fan-In Aggregation: {len(unique_senders)} distinct accounts paid ₹{total_agg:,.2f} into one account within 24 hours.",
                             features_json={
                                 "feeder_count": len(unique_senders),
-                                "total_aggregated": total_agg,
-                                "customer_id": cust_id
+                                "total_aggregated": round(total_agg, 2),
+                                "customer_id": acc_to_cust.get(r_acc, "UNKNOWN"),
+                                "sample_txn_ids": [t.txn_id for t in window],
                             }
                         )
                     )
 
-        # Rule E: Fan-Out Dispersion Detection
+        # Rule E: Fan-Out Dispersion Detection (24h window)
         for s_acc, s_txns in sender_groups.items():
-            unique_receivers = set(t.receiver_account_id for t in s_txns)
-            if len(unique_receivers) >= 6:
+            window = densest_24h(s_txns, lambda x: x.receiver_account_id)
+            unique_receivers = {t.receiver_account_id for t in window}
+            if len(unique_receivers) >= FAN_MIN_COUNTERPARTIES:
                 key = f"FANOUT_{s_acc}"
                 if key not in alert_keys_seen:
                     alert_keys_seen.add(key)
-                    cust_id = acc_to_cust.get(s_acc, "UNKNOWN")
-                    total_disp = sum(t.amount for t in s_txns)
+                    total_disp = sum(t.amount for t in window)
                     alerts.append(
                         Alert(
                             alert_id=f"ALT_FOUT_{len(alerts)+1:04d}",
@@ -192,17 +226,69 @@ class TransactionMonitor:
                             entity_id=s_acc,
                             alert_type="FAN_OUT_DISPERSION",
                             severity="HIGH",
-                            raw_score=82.0,
+                            raw_score=75.0,
                             priority_rank=2,
                             status="PENDING",
-                            trigger_reason=f"Fan-Out Dispersion: Funds disbursed to {len(unique_receivers)} distinct beneficiary accounts totaling ${total_disp:,.2f}.",
+                            trigger_reason=f"Fan-Out Dispersion: ₹{total_disp:,.2f} sent to {len(unique_receivers)} distinct accounts within 24 hours.",
                             features_json={
                                 "recipient_count": len(unique_receivers),
-                                "total_disbursed": total_disp,
-                                "customer_id": cust_id
+                                "total_disbursed": round(total_disp, 2),
+                                "customer_id": acc_to_cust.get(s_acc, "UNKNOWN"),
+                                "sample_txn_ids": [t.txn_id for t in window],
                             }
                         )
                     )
+
+        # Rule F: UPI Mule Chain Detection (India)
+        # Many distinct UPI payers into one account within 24h, then most of it leaves within 2h.
+        for r_acc, r_txns in receiver_groups.items():
+            upi_in = sorted([t for t in r_txns if t.txn_type == "UPI"], key=lambda x: x.timestamp)
+            if len(upi_in) < UPI_MULE_MIN_SENDERS:
+                continue
+            for i in range(len(upi_in)):
+                window = [
+                    t for t in upi_in[i:]
+                    if (t.timestamp - upi_in[i].timestamp).total_seconds() <= UPI_MULE_WINDOW_SECS
+                ]
+                senders = {t.sender_account_id for t in window}
+                if len(senders) < UPI_MULE_MIN_SENDERS:
+                    continue
+                last_in = window[-1].timestamp
+                inflow = sum(t.amount for t in window)
+                drains = [
+                    o for o in sender_groups.get(r_acc, [])
+                    if 0 <= (o.timestamp - last_in).total_seconds() <= UPI_MULE_DRAIN_SECS
+                ]
+                outflow = sum(o.amount for o in drains)
+                if inflow > 0 and outflow >= inflow * UPI_MULE_DRAIN_RATIO:
+                    key = f"UPIMULE_{r_acc}"
+                    if key not in alert_keys_seen:
+                        alert_keys_seen.add(key)
+                        alerts.append(
+                            Alert(
+                                alert_id=f"ALT_UPI_{len(alerts)+1:04d}",
+                                entity_type="ACCOUNT",
+                                entity_id=r_acc,
+                                alert_type="UPI_MULE_CHAIN",
+                                severity="CRITICAL" if inflow > 100000 else "HIGH",
+                                raw_score=88.0,
+                                priority_rank=1,
+                                status="PENDING",
+                                trigger_reason=(
+                                    f"UPI mule pattern: {len(senders)} distinct payers sent ₹{inflow:,.2f} via UPI, "
+                                    f"and ₹{outflow:,.2f} ({outflow / inflow:.0%}) left within 2 hours of the last credit."
+                                ),
+                                features_json={
+                                    "distinct_upi_payers": len(senders),
+                                    "upi_inflow": round(inflow, 2),
+                                    "drain_outflow": round(outflow, 2),
+                                    "drain_ratio": round(outflow / inflow, 3),
+                                    "customer_id": acc_to_cust.get(r_acc, "UNKNOWN"),
+                                    "sample_txn_ids": [t.txn_id for t in window] + [o.txn_id for o in drains]
+                                }
+                            )
+                        )
+                    break
 
         # ----------------------------------------------------
         # 2. Machine Learning Isolation Forest Anomaly Detection
@@ -262,10 +348,11 @@ class TransactionMonitor:
         # ----------------------------------------------------
         # 3. Assign Train vs Held-Out Test Splits
         # ----------------------------------------------------
-        total_alerts = len(alerts)
-        split_idx = int(total_alerts * split_ratio)
-        for idx, alt in enumerate(alerts):
-            alt.split_type = "TRAIN" if idx < split_idx else "TEST"
+        # Split by a stable hash of the alerted entity so every alert type appears in both splits
+        # (splitting by list position put almost all of one rule's alerts in TEST).
+        for alt in alerts:
+            bucket = zlib.crc32(alt.entity_id.encode("utf-8")) % 100
+            alt.split_type = "TRAIN" if bucket < int(split_ratio * 100) else "TEST"
 
         db.bulk_save_objects(alerts)
         db.commit()

@@ -1,4 +1,5 @@
 import logging
+import uuid
 from sqlalchemy import select, func
 from app.db.session import get_db_context
 from app.db.models import Alert
@@ -40,24 +41,41 @@ def auto_seed_initial_data():
 
         # 3. Triage & Prioritize Alerts
         with get_db_context() as db:
-            ranked_alerts = alert_triage_service.prioritize_alerts(db, batch_size=200)
-        logger.info(f"Triaged and priority-ranked {len(ranked_alerts)} alerts.")
+            ranked_alerts = alert_triage_service.prioritize_alerts(db, limit=200)
+            ranked_ids = [a.alert_id for a in ranked_alerts]
+            # Demo variety: one alert per showcase typology (India UPI mule, PAN structuring, ...,
+            # plus an ML-only alert that typically ends in a documented NO_FILE decision).
+            showcase = ["UPI_MULE_CHAIN", "STRUCTURING", "MULE_ACCOUNT", "LAYERING",
+                        "FAN_OUT_DISPERSION", "ISOLATION_FOREST"]
+            demo_ids = []
+            for alert_type in showcase:
+                a = db.query(Alert).filter(Alert.alert_type == alert_type).first()
+                if a:
+                    demo_ids.append(a.alert_id)
+            demo_ids += [i for i in ranked_ids if i not in demo_ids]
+        logger.info(f"Triaged and priority-ranked {len(ranked_ids)} alerts.")
 
-        # 4. Auto-investigate Top 6 Alerts to populate investigation cases
-        top_alerts = ranked_alerts[:6]
-        for idx, alert in enumerate(top_alerts):
+        # 4. Auto-investigate 6 showcase alerts to populate investigation cases
+        for idx, alert_id in enumerate(demo_ids[:6]):
             planner_mode = "adaptive" if idx % 2 == 0 else "static"
             try:
-                execute_investigation_case(alert.alert_id, planner_mode=planner_mode)
-                logger.info(f"Auto-investigated sample case {idx+1}/6 for alert {alert.alert_id} ({planner_mode} planner).")
+                execute_investigation_case(
+                    case_id=f"CASE_{uuid.uuid4().hex[:8].upper()}",
+                    alert_id=alert_id,
+                    planner_mode=planner_mode,
+                )
+                logger.info(f"Auto-investigated sample case {idx+1}/6 for alert {alert_id} ({planner_mode} planner).")
             except Exception as e:
-                logger.warning(f"Error investigating alert {alert.alert_id}: {e}")
+                logger.warning(f"Error investigating alert {alert_id}: {e}")
 
         # 5. Run Initial Model Evaluation Benchmark on Held-Out Test Split
         try:
             with get_db_context() as db:
-                eval_res = evaluation_runner.run_benchmark_evaluation(db, split_type="TEST", seed=42)
-            logger.info(f"Auto-recorded benchmark evaluation (Fraud Recall: {eval_res['recall_score']*100:.1f}%).")
+                # Kept small so the server starts quickly; POST /api/evaluation/run for a larger run.
+                eval_res = evaluation_runner.run_benchmark_evaluation(db, split_type="TEST", seed=42, max_cases=64)
+            f = eval_res["filing"]
+            logger.info(f"Recorded evaluation: filing precision {f['precision']:.0%}, recall {f['recall']:.0%}, "
+                        f"F1 {f['f1']:.2f} on {f['cases_investigated']} held-out alerts.")
         except Exception as e:
             logger.warning(f"Error recording evaluation benchmark: {e}")
 

@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     Text,
     ForeignKey,
+    Index,
     JSON
 )
 from sqlalchemy.orm import relationship
@@ -24,7 +25,7 @@ class Customer(Base):
     risk_tier = Column(String(32), default="MEDIUM")  # LOW, MEDIUM, HIGH
     kyc_status = Column(String(32), default="VERIFIED")  # VERIFIED, PENDING, REJECTED
     occupation = Column(String(128), default="Professional")
-    country = Column(String(64), default="US")
+    country = Column(String(64), default="IN")
     is_pep = Column(Boolean, default=False)
     is_sanctioned = Column(Boolean, default=False)
     kyc_notes = Column(Text, nullable=True)
@@ -41,9 +42,12 @@ class Account(Base):
     customer_id = Column(String(64), ForeignKey("customers.customer_id"), nullable=False)
     account_type = Column(String(32), default="CHECKING")  # SAVINGS, CHECKING, BUSINESS
     balance = Column(Float, default=10000.0)
-    currency = Column(String(8), default="USD")
+    currency = Column(String(8), default="INR")
     opened_at = Column(DateTime, default=datetime.datetime.utcnow)
     status = Column(String(32), default="ACTIVE")  # ACTIVE, FROZEN, CLOSED
+    # Ground truth for EVALUATION ONLY: role of an account the synthetic criminal network controls
+    # (e.g. UPI_MULE, LAYERING_HOP). Never read by agents, rules or the LLM.
+    fraud_role = Column(String(64), nullable=True, index=True)
 
     customer = relationship("Customer", back_populates="accounts")
 
@@ -53,15 +57,21 @@ class Transaction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     txn_id = Column(String(64), unique=True, index=True, nullable=False)
-    sender_account_id = Column(String(64), ForeignKey("accounts.account_id"), nullable=False)
-    receiver_account_id = Column(String(64), ForeignKey("accounts.account_id"), nullable=False)
+    sender_account_id = Column(String(64), ForeignKey("accounts.account_id"), nullable=False, index=True)
+    receiver_account_id = Column(String(64), ForeignKey("accounts.account_id"), nullable=False, index=True)
     amount = Column(Float, nullable=False)
-    currency = Column(String(8), default="USD")
+    currency = Column(String(8), default="INR")
     txn_type = Column(String(32), default="WIRE")  # WIRE, ACH, CASH_DEPOSIT, CARD, INTERNAL
     channel = Column(String(32), default="ONLINE")  # ONLINE, ATM, BRANCH, API
     timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
     is_fraud_injected = Column(Boolean, default=False, index=True)
-    fraud_pattern_type = Column(String(64), default="NONE")  # STRUCTURING, LAYERING, SMURFING, MULE, VELOCITY, NONE
+    fraud_pattern_type = Column(String(64), default="NONE")  # evaluation-only label; never read by agents
+
+    # Most investigation queries are "this account's transactions in a time window".
+    __table_args__ = (
+        Index("ix_transactions_sender_time", "sender_account_id", "timestamp"),
+        Index("ix_transactions_receiver_time", "receiver_account_id", "timestamp"),
+    )
 
 
 class Alert(Base):
@@ -109,6 +119,19 @@ class InvestigationCase(Base):
     sar_report_text = Column(Text, nullable=True)
     sar_narrative_json = Column(JSON, nullable=True)
     agent_trail_json = Column(JSON, nullable=True)  # chronological list of all agent steps
+
+    @property
+    def filing_decision(self):
+        """FILE_STR / NO_FILE from the fact-checked report (None for cases from older versions)."""
+        return ((self.sar_narrative_json or {}).get("filing_decision") or {}).get("decision")
+
+    @property
+    def filing_tier(self):
+        return ((self.sar_narrative_json or {}).get("filing_decision") or {}).get("tier")
+
+    @property
+    def report_status(self):
+        return ((self.sar_narrative_json or {}).get("verification") or {}).get("approval_status")
     
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
@@ -162,7 +185,8 @@ class AuditLog(Base):
     input_payload = Column(JSON, nullable=True)
     output_payload = Column(JSON, nullable=True)
     execution_time_ms = Column(Float, default=0.0)
-    verification_hash = Column(String(64), nullable=False)  # SHA-256 immutable digest
+    verification_hash = Column(String(64), nullable=False)  # SHA-256 digest of this entry + previous hash
+    prev_hash = Column(String(64), nullable=True)  # hash of the previous entry in the case's chain
     timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
 
     case = relationship("InvestigationCase", back_populates="audit_logs")
@@ -201,3 +225,6 @@ class EvaluationMetricRecord(Base):
     roc_auc = Column(Float, nullable=False)
     confusion_matrix_json = Column(JSON, nullable=False)
     classification_report_json = Column(JSON, nullable=False)
+    # Full staged evaluation (detection, filing decision, fact-check robustness, per-typology)
+    metrics_json = Column(JSON, nullable=True)
+    dataset_name = Column(String(128), default="synthetic-india-v2")

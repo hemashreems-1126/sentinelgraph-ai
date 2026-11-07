@@ -23,6 +23,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   const [notes, setNotes] = useState('');
   const [investigatorId, setInvestigatorId] = useState('analyst_lead');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -31,6 +32,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     if (!notes.trim()) return;
 
     setSubmitting(true);
+    setError(null);
     try {
       await apiClient.submitFeedback(caseId, {
         feedback_type: feedbackType,
@@ -41,7 +43,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
       onSubmitted();
       onClose();
     } catch (err) {
-      console.error('Failed to submit feedback:', err);
+      // Never pretend a sign-off succeeded — show the server's reason (e.g. unverified claims).
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
     }
@@ -66,6 +69,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 rounded-lg border border-rose-500/50 bg-rose-950/40 text-rose-200 text-xs">
+              <span className="font-semibold">Not saved. </span>{error}
+            </div>
+          )}
           <div>
             <label className="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5">
               Investigator ID / Compliance Officer

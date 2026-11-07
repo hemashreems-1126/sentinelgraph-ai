@@ -26,7 +26,7 @@ def test_full_investigation_pipeline_e2e_smoke(client):
     11. SAR Drafting Agent + Investigator Feedback Loop
     """
     # Step 1: Generate & Monitor
-    gen_res = client.post("/api/alerts/generate", json={"num_customers": 50, "num_transactions": 300, "seed": 42})
+    gen_res = client.post("/api/alerts/generate", json={"num_customers": 50, "num_transactions": 300, "seed": 42, "confirm_reset": True})
     assert gen_res.status_code == 200
 
     # Step 2: Prioritize
@@ -68,7 +68,14 @@ def test_full_investigation_pipeline_e2e_smoke(client):
     assert any("Reasoning" in name for name in agent_names)
     assert any("RiskAssignment" in name for name in agent_names)
     assert any("Auditing" in name for name in agent_names)
-    assert any("ReportSAR" in name for name in agent_names)
+    assert any("FilingDecision" in name for name in agent_names)
+    assert any("ReportDrafting" in name for name in agent_names)
+    assert any("FactChecker" in name for name in agent_names)
+
+    # Every report must carry a fact-check result
+    verification = case_data["sar_narrative_json"]["verification"]
+    assert verification["total_claims"] >= 1
+    assert verification["approval_status"] in ["READY_FOR_REVIEW", "BLOCKED_UNVERIFIED_CLAIMS"]
 
     # Step 4: Verify Immutable Audit Trail in Database
     audit_res = client.get(f"/api/audit?case_id={case_id}")
