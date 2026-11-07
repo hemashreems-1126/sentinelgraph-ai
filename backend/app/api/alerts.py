@@ -91,8 +91,15 @@ def generate_synthetic_alerts(
     db: Session = Depends(get_db)
 ):
     """
-    Phase 1, Step 1: Generates synthetic transactions and runs monitoring detection to populate alerts.
+    Generates a NEW synthetic ledger (replacing the current one, including all investigations and
+    audit logs) and runs transaction monitoring on it. Requires `confirm_reset: true`.
     """
+    if not req.confirm_reset:
+        raise HTTPException(
+            status_code=400,
+            detail="This replaces the whole dataset, including investigations and audit logs. "
+                   "Send confirm_reset=true to proceed.",
+        )
     generator = SyntheticAMLDataGenerator(seed=req.seed)
     gen_stats = generator.generate_and_seed_database(
         db,

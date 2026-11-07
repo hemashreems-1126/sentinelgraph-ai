@@ -38,6 +38,7 @@ class AuditLogResponse(BaseModel):
     output_payload: Optional[Dict[str, Any]] = None
     execution_time_ms: float
     verification_hash: str
+    prev_hash: Optional[str] = None
     timestamp: datetime.datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -77,6 +78,9 @@ class InvestigationCaseSummaryResponse(BaseModel):
     final_risk_score: float
     final_risk_band: str
     final_decision: str
+    filing_decision: Optional[str] = None
+    filing_tier: Optional[str] = None
+    report_status: Optional[str] = None
     decision_rationale: Optional[str]
     created_at: datetime.datetime
     completed_at: Optional[datetime.datetime]

@@ -9,7 +9,7 @@ def get_static_checklist(alert_type: str, severity: str) -> Dict[str, Any]:
     """Deterministic checklist per alert type (Static Plan Default)."""
     if alert_type == "STRUCTURING":
         steps = [
-            {"step": 1, "agent": "EvidenceRetrievalAgent", "task": "Extract 90-day cash deposit and wire transactions just below $10,000 threshold."},
+            {"step": 1, "agent": "EvidenceRetrievalAgent", "task": "Extract 90-day cash deposits just below the ₹50,000 PAN-quoting threshold."},
             {"step": 2, "agent": "GraphRelationshipAgent", "task": "Identify sender and receiver accounts, check for common beneficiary connections."},
             {"step": 3, "agent": "BehaviorAnalysisAgent", "task": "Evaluate deposit frequency, weekend vs weekday patterns, and historical monthly turnover."},
             {"step": 4, "agent": "DocumentAnalysisAgent", "task": "Review customer KYC profile, occupation declaration, and stated source of wealth."},
@@ -24,6 +24,15 @@ def get_static_checklist(alert_type: str, severity: str) -> Dict[str, Any]:
             {"step": 4, "agent": "DocumentAnalysisAgent", "task": "Verify commercial business registration and counterparties' corporate nature."},
             {"step": 5, "agent": "ExternalIntelligenceAgent", "task": "Perform sanctions and watchlist check on all intermediate transit entities."},
             {"step": 6, "agent": "CaseAssemblyAgent", "task": "Assemble multi-hop flow timeline and network topology."}
+        ]
+    elif alert_type == "UPI_MULE_CHAIN":
+        steps = [
+            {"step": 1, "agent": "EvidenceRetrievalAgent", "task": "Pull all UPI credits into the account in the last 24h and every debit after them."},
+            {"step": 2, "agent": "GraphRelationshipAgent", "task": "Map payer accounts (likely victims) and onward beneficiary accounts (next mules)."},
+            {"step": 3, "agent": "BehaviorAnalysisAgent", "task": "Compare credit count and drain speed against the account's own history."},
+            {"step": 4, "agent": "DocumentAnalysisAgent", "task": "Check KYC: does declared occupation/income explain many small payments from strangers?"},
+            {"step": 5, "agent": "ExternalIntelligenceAgent", "task": "Check payers/beneficiaries against fraud complaints and watchlists."},
+            {"step": 6, "agent": "CaseAssemblyAgent", "task": "Assemble victim → mule → onward-account flow for the STR."}
         ]
     elif alert_type == "MULE_ACCOUNT":
         steps = [

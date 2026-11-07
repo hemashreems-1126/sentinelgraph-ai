@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -7,10 +5,13 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-sentinel}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sentinel_secret_2026}
+      # No default password: copy .env.example to .env and set your own.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (see .env.example)}
       POSTGRES_DB: ${POSTGRES_DB:-sentinelgraph_db}
-    ports:
-      - "5432:5432"
+    # The database is only reachable by the backend on the internal Docker network.
+    # To inspect it from your machine, uncomment (binds to localhost only):
+    # ports:
+    #   - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -34,7 +35,7 @@ services:
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
       - USE_MOCK_LLM=${USE_MOCK_LLM:-false}
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-sentinel_secret_2026}@postgres:5432/${POSTGRES_DB:-sentinelgraph_db}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sentinelgraph_db}
     ports:
       - "8000:8000"
 

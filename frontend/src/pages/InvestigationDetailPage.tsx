@@ -36,6 +36,15 @@ export const InvestigationDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'trail' | 'subagents' | 'hypotheses' | 'sar' | 'audit'>('trail');
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [chain, setChain] = useState<{ valid: boolean; entries: number; reason?: string } | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'audit' || !caseId) return;
+    setChain(null);
+    apiClient.verifyAuditChain(caseId)
+      .then(setChain)
+      .catch((err) => setChain({ valid: false, entries: 0, reason: err instanceof Error ? err.message : String(err) }));
+  }, [activeTab, caseId, caseData]);
 
   const fetchDetail = async () => {
     if (!caseId) return;
@@ -44,7 +53,7 @@ export const InvestigationDetailPage: React.FC = () => {
       const data = await apiClient.getInvestigationDetail(caseId);
       setCaseData(data);
     } catch (err) {
-      console.error('Failed to load investigation detail:', err);
+      window.alert(`Could not load investigation detail. ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
     }
@@ -129,7 +138,7 @@ export const InvestigationDetailPage: React.FC = () => {
               <RiskBadge band={caseData.final_risk_band} score={caseData.final_risk_score} size="lg" />
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Policy Decision</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Transaction Policy (risk band)</span>
               <DecisionBadge decision={caseData.final_decision} size="lg" />
             </div>
           </div>
@@ -183,7 +192,7 @@ export const InvestigationDetailPage: React.FC = () => {
           }`}
         >
           <FileSpreadsheet className="h-4 w-4" />
-          <span>Drafted SAR Report</span>
+          <span>STR Decision & Report</span>
         </button>
 
         <button
@@ -193,7 +202,7 @@ export const InvestigationDetailPage: React.FC = () => {
           }`}
         >
           <ShieldCheck className="h-4 w-4" />
-          <span>Immutable Audit Logs ({caseData.audit_logs?.length || 0})</span>
+          <span>Audit Chain ({caseData.audit_logs?.length || 0})</span>
         </button>
       </div>
 
@@ -202,7 +211,7 @@ export const InvestigationDetailPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-              Chronological Multi-Agent Execution Pipeline (11 Stages)
+              Chronological Multi-Agent Execution Pipeline
             </h3>
             <span className="text-xs text-slate-400 font-mono">Click any step card to inspect JSON payload</span>
           </div>
@@ -298,7 +307,7 @@ export const InvestigationDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 4: Drafted SAR Report */}
+      {/* Tab 4: STR Decision & Report */}
       {activeTab === 'sar' && (
         <SarReportViewer
           reportText={caseData.sar_report_text}
@@ -307,14 +316,17 @@ export const InvestigationDetailPage: React.FC = () => {
         />
       )}
 
-      {/* Tab 5: Immutable Audit Logs */}
+      {/* Tab 5: Hash-chained audit trail */}
       {activeTab === 'audit' && (
         <div className="bg-surface border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-slate-800 bg-surface-light/20 flex items-center justify-between">
             <h4 className="text-xs font-mono uppercase tracking-wider text-slate-300 font-bold">
-              Cryptographically Verified Audit Trails (SHA-256)
+              SHA-256 Hash-Chained Audit Trail
             </h4>
-            <span className="text-[11px] font-mono text-emerald-400">Integrity: VERIFIED</span>
+            <span className={`text-[11px] font-mono ${!chain ? 'text-slate-400' : chain.valid ? 'text-emerald-400' : 'text-rose-400'}`}
+              title={chain?.reason ?? 'Each entry hashes the previous one; editing, deleting or reordering any entry breaks the chain.'}>
+              {!chain ? 'Re-verifying chain…' : chain.valid ? `Chain re-verified: ${chain.entries} entries intact` : `TAMPERING DETECTED — ${chain.reason}`}
+            </span>
           </div>
 
           <div className="overflow-x-auto">

@@ -18,9 +18,15 @@ def test_health_endpoint(client):
     assert data["service"] == "SentinelGraph"
 
 
+def test_generate_requires_explicit_reset_confirmation(client):
+    res = client.post("/api/alerts/generate", json={"num_customers": 40, "num_transactions": 200, "seed": 42})
+    assert res.status_code == 400
+
+
 def test_generate_and_list_alerts(client):
     # 1. Generate alerts
-    gen_res = client.post("/api/alerts/generate", json={"num_customers": 40, "num_transactions": 200, "seed": 42})
+    gen_res = client.post("/api/alerts/generate",
+                          json={"num_customers": 40, "num_transactions": 200, "seed": 42, "confirm_reset": True})
     assert gen_res.status_code == 200
     data = gen_res.json()
     assert data["alerts_generated_count"] > 0
@@ -45,3 +51,8 @@ def test_evaluation_api(client):
     assert "precision_score" in data
     assert "recall_score" in data
     assert "confusion_matrix_json" in data
+    # staged, honest evaluation
+    m = data["metrics_json"]
+    assert {"detection", "filing", "fact_check"} <= set(m)
+    assert m["filing"]["cases_investigated"] > 0
+    assert 0.0 <= m["fact_check"]["corruption_catch_rate"] <= 1.0

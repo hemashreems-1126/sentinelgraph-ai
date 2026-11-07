@@ -46,7 +46,7 @@ export const AlertsPage: React.FC = () => {
       });
       setAlerts(data);
     } catch (err) {
-      console.error('Failed to fetch alerts:', err);
+      window.alert(`Could not fetch alerts. ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
     }
@@ -57,12 +57,13 @@ export const AlertsPage: React.FC = () => {
   }, [statusFilter, severityFilter, typeFilter, splitFilter]);
 
   const handleGenerate = async () => {
+    if (!window.confirm('Generate a new synthetic ledger? This replaces ALL current alerts, investigations and audit logs.')) return;
     setGenerating(true);
     try {
       await apiClient.generateSyntheticAlerts(200, 1500, 42);
       await fetchAlerts();
     } catch (err) {
-      console.error('Failed to generate:', err);
+      window.alert(`Could not generate. ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setGenerating(false);
     }
@@ -74,7 +75,7 @@ export const AlertsPage: React.FC = () => {
       await apiClient.prioritizeAlerts(100);
       await fetchAlerts();
     } catch (err) {
-      console.error('Failed to prioritize:', err);
+      window.alert(`Could not prioritize. ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setPrioritizing(false);
     }
@@ -86,7 +87,7 @@ export const AlertsPage: React.FC = () => {
       const res = await apiClient.startInvestigation(alertId, selectedPlannerMode);
       navigate(`/investigations/${res.case_id}`);
     } catch (err) {
-      console.error('Failed to start investigation:', err);
+      window.alert(`Could not start investigation. ${err instanceof Error ? err.message : String(err)}`);
       setInvestigatingId(null);
     }
   };

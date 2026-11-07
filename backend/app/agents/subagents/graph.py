@@ -4,6 +4,7 @@ from typing import Dict, Any
 from app.agents.state import InvestigationState
 from app.services.graph_store import financial_graph_store
 from app.db.session import SessionLocal
+from app.services.round_trip import find_round_trip
 
 
 def graph_relationship_node(state: InvestigationState) -> InvestigationState:
@@ -18,6 +19,9 @@ def graph_relationship_node(state: InvestigationState) -> InvestigationState:
     try:
         financial_graph_store.build_graph(db)
         graph_analysis = financial_graph_store.analyze_entity_subgraph(primary_acc, max_hops=2)
+        round_trip = find_round_trip(db, primary_acc)
+        graph_analysis["has_cycles"] = bool(round_trip)
+        graph_analysis["round_trip_txn_ids"] = round_trip or []
     finally:
         db.close()
 
@@ -30,6 +34,7 @@ def graph_relationship_node(state: InvestigationState) -> InvestigationState:
         "summary": (
             f"Analyzed 2-hop network graph: {graph_analysis['total_counterparties']} counterparties, "
             f"{graph_analysis['high_risk_connections_count']} high-risk connections. "
+            f"Time-ordered round trip: {'found' if graph_analysis['has_cycles'] else 'none'}. "
             f"Path to watchlist: {graph_analysis['shortest_path_to_watchlist']}."
         ),
         "details": graph_analysis,

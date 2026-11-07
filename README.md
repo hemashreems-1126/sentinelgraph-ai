@@ -1,260 +1,208 @@
-# 🛡️ SentinelGraph — Multi-Agent Financial Crime Alert Investigation Platform
+# 🛡️ SentinelGraph
 
-[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Web%20Application-Click%20Here%20to%20Open-4F46E5.svg?style=for-the-badge&logo=render&logoColor=white)](https://sentinelgraph-frontend.onrender.com)
-[![API Docs](https://img.shields.io/badge/📑%20Backend%20API-Swagger%20OpenAPI-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://sentinelgraph-backend.onrender.com/docs)
+**An India-first AML investigation assistant whose AI has to prove every claim it makes, and which decides whether a Suspicious Transaction Report is worth filing.**
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-Python%203.11-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-FF6B6B?logo=langchain&logoColor=white)](https://github.com/langchain-ai/langgraph)
-[![Groq](https://img.shields.io/badge/LLM-Groq%20LLaMA--3.3-F55036)](https://groq.com)
-[![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite%20%2B%20Tailwind-61DAFB?logo=react&logoColor=black)](https://react.dev)
-[![Pytest](https://img.shields.io/badge/Pytest-14%2F14%20Passing-10B981?logo=pytest&logoColor=white)](https://github.com/hemashreems-1126/sentinelgraph-ai)
-[![Fraud Recall](https://img.shields.io/badge/Fraud%20Recall-100%25%20(ROC--AUC%200.9917)-10B981)](https://github.com/hemashreems-1126/sentinelgraph-ai)
+[![CI](https://github.com/hemashreems-1126/sentinelgraph-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/hemashreems-1126/sentinelgraph-ai/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![LangGraph](https://img.shields.io/badge/LangGraph-multi--agent-FF6B6B)
+![React](https://img.shields.io/badge/React%20%2B%20TypeScript-61DAFB?logo=react&logoColor=black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL%20%7C%20SQLite-336791?logo=postgresql&logoColor=white)
 
-> **Built for the Razorpay AI Buildathon 2026 — "AI Risk Manager" Track**  
-> An autonomous, end-to-end multi-agent AI system that simulates, detects, triages, investigates, and drafts regulatory compliance reports for complex financial crime (AML/Fraud) with **100% deterministic mathematical risk scoring** and cryptographic audit trails.
+Live demo: [sentinelgraph-frontend.onrender.com](https://sentinelgraph-frontend.onrender.com) · API docs: [/docs](https://sentinelgraph-backend.onrender.com/docs)
+(free hosting — the first request can take ~1 minute while the server wakes up)
+
+![STR draft for a UPI mule account — every claim verified against the ledger](docs/screenshots/str_upi_mule.png)
 
 ---
 
-## 🌐 Quick Access Links
+## The problem
 
-| Layer | URL | Description |
+Indian banks, payment aggregators, NBFCs and fintechs must investigate suspicious activity and file
+**Suspicious Transaction Reports (STRs) with FIU-IND** under the PMLA. In practice:
+
+- **Analysts drown in false alarms.** Industry estimates put 85–95% of transaction-monitoring alerts as false positives, with each alert taking 20–60 minutes to review ([Facctum](https://www.facctum.com/blog/aml-false-positive-report)).
+- **Mule accounts are the backbone of UPI fraud.** RBI built [MuleHunter.AI](https://www.business-standard.com/amp/finance/news/what-is-mulehunter-ai-rbi-s-latest-tool-against-financial-fraud-explained-124120600865_1.html) to detect them, and mule networks were named the hardest fraud threat for Indian firms in 2026 ([India Fraud Report 2026](https://www.newkerala.com/news/a/mule-networks-biggest-fraud-threat-indian-firms-india-258.htm)).
+
+**Who feels it:** compliance analysts and the PMLA *Principal Officer*, above all at small and
+mid-sized Indian institutions, which have the same legal duties as big banks but not the budget.
+
+### What already exists, and the gap
+
+Agentic AML investigation tools already exist: Hawk's AML Investigative Agent, Unit21's agents, Lucinity's Luci copilot,
+and Quantexa's entity-resolution graphs. They make investigations *faster*. SentinelGraph targets three things they leave open:
+
+| Gap | Why it matters | What SentinelGraph does |
 |---|---|---|
-| 🚀 **Live Web Application (Frontend)** | **[https://sentinelgraph-frontend.onrender.com](https://sentinelgraph-frontend.onrender.com)** | Full interactive React dashboard with pre-loaded alerts, 2-hop entity graph viewer, agent timelines, and SAR report generator. |
-| 📑 **Backend OpenAPI / Swagger Docs** | **[https://sentinelgraph-backend.onrender.com/docs](https://sentinelgraph-backend.onrender.com/docs)** | Interactive Swagger UI to inspect and test all 11-stage backend API endpoints directly in the cloud. |
+| **Nobody checks the AI's facts.** A hallucinated number in an STR is a regulatory problem, and vendor accuracy claims are self-reported. | Regulators expect explainable, validated outputs; US model-risk guidance (SR 26-2) even excludes agentic AI from its scope. | Every report sentence is an **evidence-linked claim**. A deterministic **fact checker** re-computes each one from the ledger and **blocks sign-off** if anything is unsupported. |
+| **Tools help you file more, not better.** | FATF discourages *defensive filing* (low-quality "just-in-case" STRs) and has [suggested tiered STRs](https://sumsub.com/media/news/fatf-tiered-system-for-suspicious-transaction-reports/). | A **filing decision**: *File STR (Tier 1/2/3)* or *Don't file*, with a **documented closure memo**. |
+| **Built for FinCEN, not FIU-IND.** | UPI mule chains and India's cash rules differ from US typologies. | **UPI mule-chain** and **₹50,000 PAN-threshold structuring** rules; an FIU-IND-style STR draft. |
+
+**Where it sits:** SentinelGraph works *after* money has moved. It is not real-time payment blocking. It helps the analyst catch the
+mule network quickly, freeze what is left, and protect the next victims.
 
 ---
 
-## 📌 Problem Statement
+## How it works
 
-Traditional financial risk management and Anti-Money Laundering (AML) monitoring systems suffer from three critical industry bottlenecks:
-
-1. **Extreme Alert Fatigue & False Positives**: Over 95% of traditional rule-based alerts are false alarms, overwhelming compliance analysts and delaying action on actual financial crimes.
-2. **Fragmented & Manual Investigation**: Investigating a single suspect account requires a human analyst to manually piece together transaction ledgers, multi-hop counterparty network graphs, behavioral velocity shifts, and KYC identity documents.
-3. **LLM Hallucination & Compliance Risks**: Pure LLM-based decision systems cannot be audited, hallucinate risk numbers, and violate strict FinCEN/FIU regulatory governance standards.
-
----
-
-## 💡 Our Solution: SentinelGraph
-
-**SentinelGraph** solves this by unifying **Machine Learning anomaly detection**, an **11-stage LangGraph multi-agent investigative workflow**, and **100% deterministic Python risk scoring** into a single cohesive platform:
-
-```
-┌─────────────────────────┐     ┌───────────────────────────────────┐     ┌───────────────────────────────────┐
-│   PHASE 1: DETECTION    │     │   PHASE 2: MULTI-AGENT ANALYSIS   │     │    PHASE 3: GOVERNANCE & SAR      │
-│                         │     │                                   │     │                                   │
-│ • AMLSim Data Simulator │     │ • Supervisor & Memory Layer       │     │ • Forensic Synthesis Reasoning    │
-│ • Rule + Isolation Forest ───▶│ • Static SOP / Adaptive Planner  ───▶│ • 100% Deterministic Risk Score   │
-│ • Priority Triage Queue │     │ • Competing Hypotheses Formulation│     │ • SHA-256 Cryptographic Audit Log │
-│                         │     │ • 6 Forensic Specialized Agents   │     │ • FinCEN SAR Draft + Human Review │
-└─────────────────────────┘     └───────────────────────────────────┘     └───────────────────────────────────┘
+```mermaid
+flowchart LR
+    L[(Ledger<br/>SQLite / Postgres)] --> M[Monitoring<br/>India rules + Isolation Forest]
+    M --> T[Triage]
+    T --> A["LangGraph agents<br/>plan · hypotheses · evidence · graph<br/>behaviour · KYC · screening"]
+    A --> R[Risk score]
+    R --> F["Fact sheet<br/>evidence-linked claims + red flags"]
+    F --> D{"Filing decision<br/>File STR (tier) / No file + memo"}
+    D --> W["Report drafter<br/>LLM may only re-word"]
+    W --> C["Fact checker<br/>recomputes every claim"]
+    C --> H["Hash-chained audit log"]
+    H --> P(["Analyst sign-off<br/>blocked if any claim unverified"])
 ```
 
-### Key Highlights:
-- **Dual Anomaly Engine**: Combines deterministic rule heuristics with scikit-learn's `IsolationForest` multidimensional anomaly detection.
-- **Multi-Agent LangGraph Pipeline**: 6 specialized subagents (Evidence Retrieval, NetworkX 2-Hop Graph Traversal, Behavioral Z-Scores, KYC Document Parsing, Mocked PEP/Sanctions screening, Case Assembly) orchestrated by a Supervisor with **conditional loop-backs** (max 2 iterations) for forensic uncertainty.
-- **Zero-Hallucination Risk Scoring**: The final risk score (0–100), risk band (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`), and decision (`ALLOW`, `REVIEW`, `BLOCK`) are computed by a **100% deterministic mathematical formula** — not generated by an LLM.
-- **FinCEN SAR Narrative Drafting**: Automatically drafts regulatory-compliant Suspicious Activity Reports labeled for human compliance officer review and sign-off.
-- **Tamper-Evident Auditing**: Every agent action, tool call, and decision is cryptographically hashed with SHA-256.
+1. **Detection.** Rules for structuring just under the ₹50,000 PAN threshold, velocity, pass-through, 24-hour fan-in/fan-out and **UPI mule chains**, plus an Isolation Forest.
+2. **Investigation.** LangGraph agents gather the ledger (ground-truth labels are hidden from them), map the money-flow network, detect **time-ordered round trips**, compare behaviour with the account's **own 45-day baseline**, read KYC and run (mock) PEP/sanctions screening.
+3. **Fact sheet.** Ledger rows become claims such as *"The account received ₹78,801.61 in 6 credits from 6 distinct sender accounts"*. Each claim carries the IDs of its records and the assertions to check.
+4. **Filing decision.** Filing needs corroborated red flags such as **first-time payers** (strangers, not regular customers), pass-through, split payments, onward layering, or a dormant/new account. A score alone is not enough. A "don't file" outcome is documented as carefully as a filing.
+5. **Fact checker.** Recomputes every assertion from the cited records only, and rejects any number in the text that is not backed by an assertion, any record that does not exist, and any number in free text. It also scores 5W1H completeness. The analyst's `AGREE` is refused (HTTP 409) until the report is clean.
+6. **Audit.** Every agent step and every analyst action goes into a **SHA-256 hash chain**. Editing, deleting or reordering any entry is detected by `GET /api/audit/verify/{case_id}`.
+
+The **LLM is optional** (Groq / LLaMA-3.3). Without a key, every step uses deterministic logic. With a key, the LLM can re-word
+claims and the narrative, but it never decides a number, a score, a filing decision or a fact.
+
+| Fact-checked STR (UPI mule) | Documented "don't file" memo |
+|---|---|
+| ![](docs/screenshots/str_upi_mule.png) | ![](docs/screenshots/no_file_memo.png) |
+
+| Money-flow network | Hash-chained audit trail |
+|---|---|
+| ![](docs/screenshots/evidence_graph.png) | ![](docs/screenshots/audit_chain.png) |
 
 ---
 
-## 🖼️ Architecture Diagram
+## Results (honest evaluation)
 
-![SentinelGraph 11-Stage Architecture](docs/architecture_diagram.png)
+Every number comes from **actually running** detection, the agents, the filing decision and the fact checker on
+**held-out alerts** (`python run_eval.py --cases 200`, seed 42, full output in [`backend/evaluation_results.json`](backend/evaluation_results.json)).
 
----
+**Ground truth:** an alert is truly suspicious if its subject account is controlled by the synthetic criminal network.
+Victims, smurfs/feeders and **legitimate look-alikes** (kirana shops collecting UPI payments, payroll runs, monthly rent splits, cash businesses) are
+negatives, so that no rule can look perfect.
 
-## 🚀 How to Run Locally (1-Click Startup — Zero Setup)
-
-Whether you are a recruiter, reviewer, or developer, SentinelGraph is designed to run in **one click** with **zero configuration, zero paid API keys, and zero external database setup** (SQLite is pre-seeded and built-in).
-
-### 🖥️ Option 1: 1-Click All-in-One Launcher (Recommended)
-
-#### On Windows:
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/hemashreems-1126/sentinelgraph-ai.git
-   cd sentinelgraph-ai
-   ```
-2. **Double-click `start.bat`** (or run `.\start.bat` in terminal).
-   - *It automatically installs any missing dependencies on first launch.*
-   - *It launches the FastAPI Backend (`http://localhost:8000`) and React Frontend (`http://localhost:3000`) in the background.*
-   - *It automatically opens your browser at **`http://localhost:3000`** with full pre-loaded data!*
-
-#### On macOS / Linux:
-```bash
-git clone https://github.com/hemashreems-1126/sentinelgraph-ai.git
-cd sentinelgraph-ai
-chmod +x start.sh run_backend.sh run_frontend.sh
-./start.sh
-```
-
----
-
-### 🐳 Option 2: Docker Compose (Alternative)
-
-```bash
-docker compose up --build
-```
-- Web UI: `http://localhost:3000`
-- API Docs: `http://localhost:8000/docs`
-
----
-
-### 💻 Option 3: Visual Studio Code
-
-1. Open folder in VS Code (`File` $\to$ `Open Folder...`).
-2. Press **`Ctrl + Shift + B`** (Runs the automated launch task).
-3. Open `http://localhost:3000`.
-
----
-
-## 🎮 2-Minute Demo Walkthrough (What to Click)
-
-To experience the full agentic workflow in the UI:
-
-1. **Dashboard Overview**:
-   - Open **`https://sentinelgraph-frontend.onrender.com`** (or `http://localhost:3000` locally).
-   - The dashboard is pre-populated with 64 alerts and 6 completed investigation dossiers.
-   - Click **"Generate Synthetic Batch"** to inject additional transactions and fraud patterns in real-time.
-
-2. **Triage & Rank Alerts**:
-   - Click **Alerts Queue** in the left sidebar.
-   - Click **"Prioritize Queue"** to sort alerts by risk urgency.
-   - Choose your planner mode at the top (**Static Plan** or **Adaptive Planner**).
-   - Click the purple **"Investigate"** button on any alert row.
-
-3. **Inspect the Multi-Agent Forensic Dossier**:
-   - **Full Agent Trail**: Click each step card to inspect per-agent inputs, outputs, and execution duration in milliseconds.
-   - **Sub-Agent Evidence & Graph**: Explore the interactive 2-hop NetworkX entity network and behavioral z-score analytics.
-   - **Deterministic Risk Score**: View the exact 0–100 mathematical score and policy action (`ALLOW`, `REVIEW`, `BLOCK`).
-   - **Drafted SAR Report**: View the FinCEN regulatory narrative draft.
-   - **Investigator Override**: Click **"Investigator Decision / Override"** to test submitting a human compliance sign-off.
-
-4. **Audit Trail**: Click **Audit Trail** in the left sidebar to inspect the cryptographic **SHA-256 immutable logs**.
-5. **Model Evaluation**: Click **Model Evaluation** to view the live precision, recall ($100\%$), ROC-AUC ($0.9917$), and empirical confusion matrix.
-
----
-
-## 📊 Empirical Evaluation Benchmark (Held-Out Test Set)
-
-Evaluated via `python backend/run_eval.py` against the synthetic financial test split (**Zero Fabricated Numbers**):
-
-| Metric | Score | Industry Interpretation |
+| Stage | Metric | Result |
 |---|---|---|
-| **Fraud Recall** | **100.00%** | **36 / 36 injected fraud topologies caught** (Zero missed fraud cases) |
-| **ROC-AUC** | **0.9917** | Outstanding discriminative separation between benign and illicit patterns |
-| **Accuracy** | **80.08%** | Total test classification accuracy across all transaction topologies |
-| **Triage Precision** | **41.38%** | High-sensitivity surveillance funnel before multi-agent investigation filtering |
-| **F1 Score** | **0.5854** | Harmonic balance between aggressive threat detection and operational queue size |
+| **Detection** (351 alerts) | Alert precision · criminal accounts alerted | **79.2%** · **87.6%** of 499 |
+| **Filing decision** (196 investigated) | Precision / Recall / F1 | **86.6% / 73.6% / 0.795** |
+| | Alerts closed with a written reason (workload removed) | **39.3%** |
+| | Legitimate look-alikes wrongly filed | 30.8% of 52 |
+| | ROC-AUC of the weighted risk score alone | 0.56 *(weak; the evidence-based decision does the work)* |
+| **Fact checking** | Genuine reports fully verified · claims grounded · 5W1H completeness | **100% · 100% · 99.6%** |
+| | Deliberately corrupted reports caught (980 tests, 5 corruption types) | **99.9%** |
 
-### Confusion Matrix (Test Split $N=256$):
-$$\begin{pmatrix} \text{True Positives: } 36 & \text{False Positives: } 51 \\ \text{False Negatives: } 0 & \text{True Negatives: } 169 \end{pmatrix}$$
+<details><summary>Per-alert-type breakdown</summary>
 
----
+| Alert type | Alerts | Detection precision | Investigated | Filed | Truly suspicious | Filing correct |
+|---|---|---|---|---|---|---|
+| Structuring (PAN threshold) | 22 | 95% | 22 | 22 | 21 | 95% |
+| Mule account | 65 | 91% | 27 | 18 | 21 | 89% |
+| Layering | 37 | 100% | 25 | 20 | 25 | 80% |
+| Fan-in aggregation | 60 | 72% | 36 | 24 | 19 | 81% |
+| UPI mule chain | 20 | 60% | 20 | 17 | 12 | 75% |
+| Velocity abuse | 17 | 65% | 17 | 4 | 11 | 59% |
+| Fan-out dispersion | 15 | 53% | 15 | 0 | 8 | 47% |
+| Isolation Forest | 115 | 76% | 34 | 14 | 23 | 50% |
 
-## ⚖️ Deterministic Risk Scoring Formula
+The five corruption types are: a number added to a sentence, an inflated value, a fabricated record ID, a claim with no evidence, and a number in free text.
+</details>
 
-SentinelGraph removes LLM hallucination risk by calculating the final score and policy action using a deterministic mathematical formula combining weighted forensic feature vectors:
+**Evaluate on data the system did not generate:** download the
+[IBM AML dataset](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml) (e.g. `HI-Small_Trans.csv`) and run
 
-$$Score = 100 \times \min\left(1.0, \, 0.25 \cdot \frac{S_{\text{raw}}}{100} + 0.25 \cdot \frac{S_{\text{graph}}}{100} + 0.20 \cdot \frac{S_{\text{behavior}}}{100} + 0.20 \cdot \frac{S_{\text{intel}}}{100} + 0.10 \cdot \frac{S_{\text{doc}}}{100}\right)$$
-
-```
-  0 ─── [LOW] ─── 30 ────── [MEDIUM] ────── 60 ────── [HIGH] ────── 80 ── [CRITICAL] ── 100
-  ├───── ALLOW ─────┤├────────────── REVIEW ──────────────┤├──────────── BLOCK ────────────┤
-```
-
----
-
-## 🧪 Automated Pytest Suite (14/14 Tests Passing)
-
-To run the automated backend test suite:
 ```bash
 cd backend
-python -m pytest tests -v
-```
-
-```text
-tests/test_api_endpoints.py::test_health_endpoint PASSED                 [  7%]
-tests/test_api_endpoints.py::test_generate_and_list_alerts PASSED        [ 14%]
-tests/test_api_endpoints.py::test_evaluation_api PASSED                  [ 21%]
-tests/test_data_generator.py::test_synthetic_data_generator_generates_entities PASSED [ 28%]
-tests/test_monitor_triage.py::test_monitor_detects_alerts PASSED         [ 35%]
-tests/test_monitor_triage.py::test_triage_service_prioritizes_alerts PASSED [ 42%]
-tests/test_planner.py::test_static_checklist_for_structuring PASSED      [ 50%]
-tests/test_planner.py::test_planner_node_adaptive_and_static PASSED      [ 57%]
-tests/test_risk_scoring.py::test_deterministic_risk_scoring_bands PASSED [ 64%]
-tests/test_risk_scoring.py::test_risk_scoring_node_in_state PASSED       [ 71%]
-tests/test_smoke_e2e.py::test_full_investigation_pipeline_e2e_smoke PASSED [ 78%]
-tests/test_subagents.py::test_subagents_execution_pipeline PASSED        [ 85%]
-tests/test_workflow_graph.py::test_conditional_loop_back_decision PASSED [ 92%]
-tests/test_workflow_graph.py::test_compiled_graph_structure PASSED       [100%]
-
-======================== 14 passed in 3.39s ========================
+python run_eval.py --ibm path/to/HI-Small_Trans.csv --max-rows 200000 --cases 200
 ```
 
 ---
 
-## 📁 Repository Structure
+## Run it
+
+**One click:** `./start.sh` (macOS/Linux) or `start.bat` (Windows). This installs dependencies on first run, starts the API on `:8000`
+and the UI on `:3000`, and seeds a demo dataset with six investigated cases and an evaluation.
+
+**Manually**
+
+```bash
+cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload    # http://localhost:8000/docs
+cd frontend && npm install && npm run dev                                         # http://localhost:3000
+```
+
+**Docker (PostgreSQL)**
+
+```bash
+cp .env.example .env          # set POSTGRES_PASSWORD (no default on purpose)
+docker compose up --build     # UI http://localhost:3000 · API http://localhost:8000/docs
+```
+
+**Optional LLM:** set `GROQ_API_KEY` in `.env`. Everything works without it.
+
+**Tests:** `cd backend && python -m pytest tests -q`. There are 31 tests: the fact checker catching hallucinations, the filing policy,
+the approval gate, audit-chain tamper detection, the external-dataset loader and the end-to-end pipeline. CI runs them on **SQLite and PostgreSQL**,
+runs an evaluation and builds the frontend.
+
+### Database
+
+- SQLite locally and PostgreSQL in Docker, through the same code. Point `DATABASE_URL` at any Postgres (e.g. free Neon or Render Postgres) for persistence.
+- **Alembic migrations** run automatically on startup. Databases from the first release are detected and upgraded in place.
+- Indexed for the main query pattern: an account's transactions in a time window.
+- On Render's free tier SQLite is reset on every redeploy (the demo re-seeds itself). Use Postgres for anything persistent.
+
+---
+
+## API highlights
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/investigations/start` | Run the full multi-agent investigation for an alert |
+| `GET /api/investigations/{id}` | Case with filing decision, fact-checked report, agent trail |
+| `POST /api/investigations/{id}/feedback` | Analyst AGREE / DISAGREE / OVERRIDE (`AGREE` → 409 if claims unverified) |
+| `GET /api/audit/verify/{case_id}` | Re-verify the case's SHA-256 hash chain |
+| `POST /api/evaluation/run` | Staged evaluation on held-out alerts |
+| `POST /api/alerts/generate` | Replace the dataset (requires `confirm_reset: true`) |
+
+## Project structure
 
 ```
-sentinelgraph-ai/
-├── start.bat                        # 1-Click All-in-One Launcher for Windows (Auto-Installs & Opens Browser)
-├── start.sh                         # 1-Click All-in-One Launcher for macOS/Linux
-├── run_backend.bat                  # Dedicated Windows Backend Launcher
-├── run_frontend.bat                 # Dedicated Windows Frontend Launcher
-├── run_backend.sh                   # Dedicated macOS/Linux Backend Launcher
-├── run_frontend.sh                  # Dedicated macOS/Linux Frontend Launcher
-├── .vscode/                         # Native VS Code Tasks (Ctrl+Shift+B)
-├── backend/
-│   ├── app/
-│   │   ├── main.py                  # FastAPI server with CORS & lifespan auto-seed
-│   │   ├── config.py                # Settings, Groq config, DB URLs, Thresholds
-│   │   ├── db/                      # SQLAlchemy models & session management
-│   │   ├── schemas/                 # Pydantic v2 schemas
-│   │   ├── services/                # Data generator, Monitor, Triage, LLM, GraphStore, Seed
-│   │   ├── agents/                  # LangGraph Supervisor, Planner, Hypotheses, Subagents, Reasoning, Risk Scoring, Audit, SAR Drafter
-│   │   └── api/                     # REST API routers (Alerts, Investigations, Audit, Evaluation)
-│   ├── tests/                       # 14 Pytest unit, integration & E2E smoke tests
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── run_eval.py                  # Standalone benchmark evaluation CLI
-├── frontend/
-│   ├── src/
-│   │   ├── components/              # RiskBadge, DecisionBadge, AgentTrailCard, NetworkGraphView, SarReportViewer, FeedbackModal, Layout
-│   │   ├── pages/                   # Dashboard, AlertsPage, InvestigationsPage, InvestigationDetailPage, AuditLogPage, EvaluationPage
-│   │   ├── api/                     # Typed API client with seamless offline/cloud fallback store
-│   │   └── types/                   # TypeScript interfaces
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tailwind.config.js
-│   └── Dockerfile
-├── docs/
-│   ├── architecture_diagram.png     # Rendered high-res architecture diagram
-│   ├── generate_diagram.py          # Diagram generation script
-│   └── pipeline_spec.md             # Detailed pipeline documentation
-├── docker-compose.yml               # Multi-container orchestration (Postgres, Backend, Frontend)
-├── render.yaml                      # Render.com Blueprint configuration
-├── .env.example
-├── .gitignore
-└── README.md
+backend/
+  app/agents/          LangGraph workflow, sub-agents, fact_sheet, filing_decision, report_drafter, fact_checker, auditing
+  app/services/        data_generator (India-first + look-alikes), monitor, external_data (IBM), round_trip, graph_store, llm
+  app/utils/           evaluation_runner (staged, honest evaluation)
+  alembic/             database migrations
+  scripts/             export_offline_snapshot.py (read-only UI data from a real run)
+  tests/               31 tests
+  run_eval.py          evaluation CLI (synthetic or IBM dataset)
+frontend/src/          React + TypeScript UI (dashboard, alerts, investigations, STR viewer, audit, evaluation)
+docs/                  pipeline_spec.md, screenshots
+.github/workflows/     CI (SQLite + PostgreSQL tests, evaluation run, frontend build)
 ```
 
 ---
 
-## 🏆 Razorpay Buildathon 2026 Track Mapping
+## Limitations (stated plainly)
 
-| Requirement | Implementation in SentinelGraph | Code Location |
-|---|---|---|
-| **Multi-Agent Orchestration** | Supervisor agent, short/long-term memory, conditional loop-backs (max 2 iterations) | `backend/app/agents/workflow.py`, `supervisor.py` |
-| **Intelligent Triage & Detection** | Heuristic rules + Isolation Forest anomaly detection with priority ranking | `backend/app/services/monitor.py`, `triage.py` |
-| **Forensic Planning & Hypotheses** | Static Checklist vs Adaptive LLM Planner; 2–4 competing hypotheses with probabilities | `backend/app/agents/planner.py`, `hypothesis.py` |
-| **Specialized Subagents** | Evidence retrieval, NetworkX 2-hop graph, behavioral z-scores, KYC documents, mock PEP/OFAC watchlists | `backend/app/agents/subagents/` |
-| **Deterministic Governance** | 100% Deterministic Python Risk Scoring (0–100); SHA-256 cryptographic audit logs | `backend/app/agents/risk_scoring.py`, `auditing.py` |
-| **Regulatory Reporting** | Automated FinCEN SAR narrative drafting with compliance officer sign-off & feedback loop | `backend/app/agents/report_drafter.py`, `api/investigations.py` |
+- **Synthetic data.** Labels come from our own generator, look-alikes included. The IBM loader exists to test on external data, but its results have not yet been published here.
+- **Thresholds are hand-set from typologies,** not learned. The weighted risk score separates poorly on its own (ROC-AUC 0.56) and is only used for tiering.
+- **Weak spots in the numbers above:** fan-out dispersal looks like payroll (0 of 8 filed); about 31% of legitimate look-alikes are still filed.
+- **PEP/sanctions screening is mocked.** There is no real watchlist feed.
+- **Single-institution view.** Mule networks span banks; cross-bank sharing (as in RBI's DPIP / MuleHunter) is out of scope.
+- **Not real-time.** It does not stop the first fraudulent payment. It speeds up the investigation afterwards.
+- **Not legal advice.** Draft STRs need Principal Officer review, which the app enforces.
 
----
+## What changed in v2
 
-## 📄 License
+The first version reported "100% recall / ROC-AUC 0.99", but its evaluator sampled scores *from the ground-truth labels*, and its behaviour agent returned
+fixed z-scores per alert type. v2 replaced both with real computation and added the fact checker, the filing decision, India-specific rules,
+legitimate look-alikes, a hash-chained audit log, Alembic migrations and PostgreSQL support. It also stopped the UI from silently showing mock data or faking a successful sign-off.
 
-MIT License. Developed for the **Razorpay AI Buildathon 2026 ("AI Risk Manager" track)**. All simulated datasets and watchlist entities are generated synthetically for demonstration purposes.
+## License
+
+MIT. Built for the Razorpay AI Buildathon 2026 (AI Risk Manager track). All data is synthetic; any resemblance to real people is coincidental.

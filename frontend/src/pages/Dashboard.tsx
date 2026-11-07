@@ -15,9 +15,9 @@ import {
   Cpu
 } from 'lucide-react';
 import { apiClient } from '../api/client';
-import { AlertStatsSummary, InvestigationCaseSummary } from '../types';
+import { AlertStatsSummary, InvestigationCaseSummary, EvaluationMetric } from '../types';
 import { RiskBadge } from '../components/RiskBadge';
-import { DecisionBadge } from '../components/DecisionBadge';
+import { FilingBadge } from '../components/FilingBadge';
 import {
   BarChart,
   Bar,
@@ -36,6 +36,11 @@ export const Dashboard: React.FC = () => {
   const [recentCases, setRecentCases] = useState<InvestigationCaseSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [evaluation, setEvaluation] = useState<EvaluationMetric | null>(null);
+
+  useEffect(() => {
+    apiClient.getLatestEvaluation().then(setEvaluation).catch(() => setEvaluation(null));
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
@@ -47,7 +52,7 @@ export const Dashboard: React.FC = () => {
       setStats(statsData);
       setRecentCases(casesData);
     } catch (err) {
-      console.error('Failed to load dashboard data:', err);
+      window.alert(`Could not load dashboard data. ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
     }
@@ -58,13 +63,14 @@ export const Dashboard: React.FC = () => {
   }, []);
 
   const handleGenerateData = async () => {
+    if (!window.confirm('Generate a new synthetic ledger? This replaces ALL current alerts, investigations and audit logs.')) return;
     setGenerating(true);
     try {
       await apiClient.generateSyntheticAlerts(200, 1500, 42);
       await apiClient.prioritizeAlerts(50);
       await loadData();
     } catch (err) {
-      console.error('Failed to generate batch:', err);
+      window.alert(`Could not generate batch. ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setGenerating(false);
     }
@@ -87,7 +93,7 @@ export const Dashboard: React.FC = () => {
         <div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">Financial Crime Surveillance Dashboard</h1>
           <p className="text-sm text-slate-400 mt-1">
-            Real-time AML graph telemetry, rule + Isolation Forest anomaly feeds, and multi-agent investigation cases.
+            Alerts from India-first rules and an Isolation Forest, investigated by agents, decided by evidence, and fact-checked.
           </p>
         </div>
 
@@ -110,6 +116,22 @@ export const Dashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* What the system actually achieves (latest real evaluation run) */}
+      {evaluation?.metrics_json && (
+        <button onClick={() => navigate('/evaluation')}
+          className="w-full text-left p-4 rounded-2xl border border-indigo-500/30 bg-indigo-950/20 hover:bg-indigo-950/40 transition-colors">
+          <div className="text-[11px] uppercase tracking-wide text-indigo-300 mb-2">
+            Latest evaluation · {evaluation.metrics_json.filing.cases_investigated} held-out alerts · {evaluation.metrics_json.dataset}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div><div className="text-2xl font-extrabold text-white">{(evaluation.metrics_json.filing.precision * 100).toFixed(0)}% / {(evaluation.metrics_json.filing.recall * 100).toFixed(0)}%</div><div className="text-xs text-slate-400">STR filing precision / recall</div></div>
+            <div><div className="text-2xl font-extrabold text-white">{(evaluation.metrics_json.filing.alert_reduction_rate * 100).toFixed(0)}%</div><div className="text-xs text-slate-400">alerts closed with a written reason</div></div>
+            <div><div className="text-2xl font-extrabold text-white">{(evaluation.metrics_json.fact_check.genuine_reports_ready * 100).toFixed(0)}%</div><div className="text-xs text-slate-400">reports fully verified against the ledger</div></div>
+            <div><div className="text-2xl font-extrabold text-white">{(evaluation.metrics_json.fact_check.corruption_catch_rate * 100).toFixed(0)}%</div><div className="text-xs text-slate-400">corrupted (hallucinated) reports caught</div></div>
+          </div>
+        </button>
+      )}
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -266,7 +288,7 @@ export const Dashboard: React.FC = () => {
                   <th className="pb-3">Planner</th>
                   <th className="pb-3">Iterations</th>
                   <th className="pb-3">Deterministic Score</th>
-                  <th className="pb-3">Decision</th>
+                  <th className="pb-3">Filing Decision</th>
                   <th className="pb-3 text-right">Action</th>
                 </tr>
               </thead>
@@ -281,7 +303,7 @@ export const Dashboard: React.FC = () => {
                       <RiskBadge band={c.final_risk_band} score={c.final_risk_score} size="sm" />
                     </td>
                     <td className="py-3">
-                      <DecisionBadge decision={c.final_decision} size="sm" />
+                      <FilingBadge decision={c.filing_decision} tier={c.filing_tier} />
                     </td>
                     <td className="py-3 text-right">
                       <button

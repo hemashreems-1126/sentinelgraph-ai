@@ -14,7 +14,7 @@ def get_latest_evaluation(db: Session = Depends(get_db)):
     record = db.query(EvaluationMetricRecord).order_by(EvaluationMetricRecord.timestamp.desc()).first()
     if not record:
         # Run a benchmark if none exists
-        res = evaluation_runner.run_benchmark_evaluation(db, split_type="TEST", seed=42)
+        res = evaluation_runner.run_benchmark_evaluation(db, split_type="TEST", seed=42, max_cases=64)
         record = db.query(EvaluationMetricRecord).filter(EvaluationMetricRecord.run_id == res["run_id"]).first()
 
     return record
@@ -34,8 +34,10 @@ def trigger_evaluation(
     db: Session = Depends(get_db)
 ):
     """
-    Executes model evaluation against the synthetic test set, generating precision, recall, F1, and confusion matrix.
+    Runs the staged evaluation on held-out alerts: detection precision, filing decision quality
+    (precision / recall / F1 / ROC-AUC / alert reduction / hard negatives) and fact-check robustness.
     """
-    res = evaluation_runner.run_benchmark_evaluation(db, split_type=req.split_type, seed=req.seed)
+    res = evaluation_runner.run_benchmark_evaluation(db, split_type=req.split_type, seed=req.seed,
+                                                     max_cases=req.max_cases)
     record = db.query(EvaluationMetricRecord).filter(EvaluationMetricRecord.run_id == res["run_id"]).first()
     return record

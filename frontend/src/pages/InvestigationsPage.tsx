@@ -12,7 +12,7 @@ import {
 import { apiClient } from '../api/client';
 import { InvestigationCaseSummary } from '../types';
 import { RiskBadge } from '../components/RiskBadge';
-import { DecisionBadge } from '../components/DecisionBadge';
+import { FilingBadge } from '../components/FilingBadge';
 
 export const InvestigationsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ export const InvestigationsPage: React.FC = () => {
       });
       setCases(data);
     } catch (err) {
-      console.error('Failed to fetch investigations:', err);
+      window.alert(`Could not fetch investigations. ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
     }
@@ -145,7 +145,7 @@ export const InvestigationsPage: React.FC = () => {
                   <th className="py-3.5 px-4">Planner Mode</th>
                   <th className="py-3.5 px-4">Loop Cycles</th>
                   <th className="py-3.5 px-4">Deterministic Risk Score</th>
-                  <th className="py-3.5 px-4">Policy Decision</th>
+                  <th className="py-3.5 px-4">Filing Decision</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4 text-right">Action</th>
                 </tr>
@@ -170,7 +170,7 @@ export const InvestigationsPage: React.FC = () => {
                       <RiskBadge band={c.final_risk_band} score={c.final_risk_score} size="sm" />
                     </td>
                     <td className="py-3 px-4">
-                      <DecisionBadge decision={c.final_decision} size="sm" />
+                      <FilingBadge decision={c.filing_decision} tier={c.filing_tier} />
                     </td>
                     <td className="py-3 px-4 font-mono text-emerald-400 font-semibold">{c.status}</td>
                     <td className="py-3 px-4 text-right">

@@ -1,5 +1,6 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from app.agents.auditing import verify_chain
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.models import AuditLog
@@ -26,3 +27,12 @@ def list_audit_logs(
         query = query.filter(AuditLog.action_type == action_type)
 
     return query.order_by(AuditLog.timestamp.desc()).offset(offset).limit(limit).all()
+
+
+@router.get("/verify/{case_id}")
+def verify_case_audit_chain(case_id: str, db: Session = Depends(get_db)):
+    """Re-computes the SHA-256 hash chain for a case. Any edited, deleted or reordered entry is detected."""
+    logs = db.query(AuditLog).filter(AuditLog.case_id == case_id).order_by(AuditLog.id.asc()).all()
+    if not logs:
+        raise HTTPException(status_code=404, detail="No audit entries for this case")
+    return {"case_id": case_id, **verify_chain(logs)}

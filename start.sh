@@ -7,6 +7,12 @@ echo "         SentinelGraph Multi-Agent Financial Crime Platform"
 echo "======================================================================"
 echo ""
 
+# Check backend dependencies on fresh clone
+if ! python -c "import fastapi, langgraph, alembic, sklearn" > /dev/null 2>&1; then
+    echo "[Fresh Clone Setup] Installing backend packages (one-time)..."
+    python -m pip install -r backend/requirements.txt
+fi
+
 # Check frontend dependencies on fresh clone
 if [ ! -d "frontend/node_modules" ]; then
     echo "[Fresh Clone Setup] Installing frontend packages..."

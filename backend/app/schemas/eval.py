@@ -1,6 +1,7 @@
 import datetime
 from pydantic import BaseModel, ConfigDict
-from typing import List, Dict, Any
+from typing import Any, Dict, List, Optional
+from pydantic import Field
 
 
 class EvaluationMetricsResponse(BaseModel):
@@ -19,6 +20,8 @@ class EvaluationMetricsResponse(BaseModel):
     roc_auc: float
     confusion_matrix_json: Dict[str, Any]
     classification_report_json: Dict[str, Any]
+    metrics_json: Optional[Dict[str, Any]] = None
+    dataset_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -26,3 +29,4 @@ class EvaluationMetricsResponse(BaseModel):
 class EvaluationTriggerRequest(BaseModel):
     split_type: str = "TEST"
     seed: int = 42
+    max_cases: int = Field(default=120, ge=10, le=600, description="Alerts to fully investigate (stratified by type)")

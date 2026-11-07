@@ -18,7 +18,7 @@ export const AuditLogPage: React.FC = () => {
       });
       setLogs(data);
     } catch (err) {
-      console.error('Failed to load audit logs:', err);
+      window.alert(`Could not load audit logs. ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,7 @@ export const AuditLogPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Immutable Compliance Audit Log</h1>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">Hash-Chained Compliance Audit Log</h1>
           <p className="text-sm text-slate-400 mt-1">
             Deterministic, tamper-evident record of all multi-agent actions, tool executions, risk scores, and human overrides.
           </p>
