@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     DECISION_REVIEW_MAX: int = 70
     DECISION_BLOCK_MIN: int = 71
     
+    # Seed demo data in a background thread on startup (the port opens immediately).
+    SEED_IN_BACKGROUND: bool = True
+
     # Security
     # When set, destructive or expensive endpoints (replace the dataset, run an evaluation)
     # require the header `X-Admin-Token: <value>`. Leave unset only for local development.

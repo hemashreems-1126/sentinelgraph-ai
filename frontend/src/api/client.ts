@@ -59,7 +59,7 @@ export const subscribeWaking = (cb: (waking: boolean) => void) => {
   wakeListeners.add(cb);
   return () => wakeListeners.delete(cb);
 };
-const WAKE_BUDGET_MS = 90000;
+const WAKE_BUDGET_MS = 180000;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // ---------------- offline state ----------------

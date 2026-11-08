@@ -44,3 +44,16 @@ def test_cors_never_combines_wildcard_with_credentials(monkeypatch):
     cfg = cors_settings()
     assert cfg["allow_origins"] == ["https://sentinelgraph-frontend.onrender.com", "http://localhost:5173"]
     assert cfg["allow_credentials"] is True
+
+
+def test_api_answers_503_while_demo_data_is_being_prepared(monkeypatch):
+    from app.services.seed import seed_state
+    c = _client()
+    monkeypatch.setitem(seed_state, "ready", False)
+    res = c.get("/api/alerts", headers={"Origin": "https://example.org"})
+    assert res.status_code == 503 and res.headers["Retry-After"] == "5"
+    assert res.headers.get("access-control-allow-origin")  # CORS still applied
+    health = c.get("/api/health").json()
+    assert health["data_ready"] is False
+    monkeypatch.setitem(seed_state, "ready", True)
+    assert c.get("/api/alerts").status_code == 200

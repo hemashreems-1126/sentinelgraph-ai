@@ -78,7 +78,7 @@ The app is built around the analyst's actual job: **open the next case, see the 
 - **Case summary:** the recommendation, the reasons in plain English, every fact with a ✓ verified mark, and where the money went. **Approve** and **Disagree** are one click away; a disagreement asks only "should / shouldn't be filed" or "a fact is wrong", plus a reason.
 - **Technical details** (agent steps, evidence, hypotheses, risk score, audit chain) are one click further, for reviewers and auditors.
 - **Fast review loop:** "Start reviewing (N waiting)" opens the most urgent case; **Next case →** jumps to the next one. Keyboard: **A** approve, **D** disagree, **N** next case.
-- **No silent failures:** if the server is asleep (free hosting), the app shows "Waking up the server…" and retries for up to 90 s before switching to a clearly labelled read-only offline snapshot. Writes never pretend to succeed.
+- **No silent failures:** if the server is asleep (free hosting), the app shows "Waking up the server…" and retries for up to 3 minutes before switching to a clearly labelled read-only offline snapshot. Writes never pretend to succeed.
 - Demo-only actions (generate data, re-rank, choose the investigation plan) live on a separate **Demo controls** page.
 
 | Cases inbox | Case summary (UPI mule, file STR) |

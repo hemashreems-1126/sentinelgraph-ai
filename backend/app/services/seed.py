@@ -12,6 +12,20 @@ from app.utils.evaluation_runner import evaluation_runner
 logger = logging.getLogger("SentinelGraph.Seed")
 
 
+import threading
+
+# Readiness flag: API data routes answer 503 ("warming up") until the demo data exists, so the
+# web app shows "Waking up the server…" instead of an empty dashboard.
+seed_state = {"ready": True, "stage": "ready"}
+
+
+def start_background_seed():
+    """Seed in a background thread so the server opens its port immediately (hosting platforms
+    treat a server that doesn't listen within a few minutes as failed)."""
+    seed_state.update(ready=False, stage="starting")
+    threading.Thread(target=auto_seed_initial_data, name="auto-seed", daemon=True).start()
+
+
 def auto_seed_initial_data():
     """
     Automatically checks if database is empty on startup.
@@ -24,7 +38,9 @@ def auto_seed_initial_data():
             alert_count = db.scalar(select(func.count(Alert.id)))
             if alert_count and alert_count > 0:
                 logger.info(f"Database already populated ({alert_count} alerts found). Skipping seed.")
+                seed_state.update(ready=True, stage="ready")
                 return
+        seed_state["stage"] = "seeding"
 
         logger.info("Empty database detected. Auto-seeding enterprise AML simulation (15,400 txns, 1,000 entities)...")
         
@@ -68,6 +84,9 @@ def auto_seed_initial_data():
             except Exception as e:
                 logger.warning(f"Error investigating alert {alert_id}: {e}")
 
+        # The dashboard, alerts and cases are usable from here; the evaluation continues afterwards.
+        seed_state.update(ready=True, stage="evaluating")
+
         # 5. Run Initial Model Evaluation Benchmark on Held-Out Test Split
         try:
             with get_db_context() as db:
@@ -80,6 +99,12 @@ def auto_seed_initial_data():
             logger.warning(f"Error recording evaluation benchmark: {e}")
 
         logger.info("Automatic database seeding completed successfully! Dashboard is now 100% populated.")
+        seed_state["stage"] = "ready"
 
     except Exception as e:
         logger.error(f"Error during auto-seeding: {e}")
+    finally:
+        # Never leave the API stuck in "warming up": show whatever exists, honestly.
+        seed_state["ready"] = True
+        if seed_state["stage"] != "ready" and seed_state["stage"] != "evaluating":
+            seed_state["stage"] = "ready"
