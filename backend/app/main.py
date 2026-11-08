@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.security import SecurityHeadersMiddleware, cors_settings
 from app.config import settings
 from app.db.session import init_db
 from app.services.seed import auto_seed_initial_data
@@ -34,18 +35,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="SentinelGraph — Multi-Agent Financial Crime Alert Investigation Platform",
+    description="SentinelGraph — fact-checked AML investigation assistant",
     lifespan=lifespan
 )
 
 # Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware, **cors_settings())
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Mount API routers
 app.include_router(api_router, prefix=settings.API_PREFIX)

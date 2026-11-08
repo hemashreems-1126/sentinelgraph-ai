@@ -77,6 +77,8 @@ The app is built around the analyst's actual job: **open the next case, see the 
 - **Cases inbox:** most urgent first (Tier 1 → Tier 3 → "don't file"), one line per case saying who, the recommendation and why.
 - **Case summary:** the recommendation, the reasons in plain English, every fact with a ✓ verified mark, and where the money went. **Approve** and **Disagree** are one click away; a disagreement asks only "should / shouldn't be filed" or "a fact is wrong", plus a reason.
 - **Technical details** (agent steps, evidence, hypotheses, risk score, audit chain) are one click further, for reviewers and auditors.
+- **Fast review loop:** "Start reviewing (N waiting)" opens the most urgent case; **Next case →** jumps to the next one. Keyboard: **A** approve, **D** disagree, **N** next case.
+- **No silent failures:** if the server is asleep (free hosting), the app shows "Waking up the server…" and retries for up to 90 s before switching to a clearly labelled read-only offline snapshot. Writes never pretend to succeed.
 - Demo-only actions (generate data, re-rank, choose the investigation plan) live on a separate **Demo controls** page.
 
 | Cases inbox | Case summary (UPI mule, file STR) |
@@ -87,12 +89,9 @@ The app is built around the analyst's actual job: **open the next case, see the 
 |---|---|
 | ![](docs/screenshots/no_file_memo.png) | ![](docs/screenshots/audit_chain.png) |
 
----|---|
-| ![](docs/screenshots/str_upi_mule.png) | ![](docs/screenshots/no_file_memo.png) |
-
-| Money-flow network | Hash-chained audit trail |
+| Money-flow network | Disagree in two clicks |
 |---|---|
-| ![](docs/screenshots/evidence_graph.png) | ![](docs/screenshots/audit_chain.png) |
+| ![](docs/screenshots/evidence_graph.png) | ![](docs/screenshots/disagree.png) |
 
 ---
 
@@ -203,6 +202,19 @@ docs/                  pipeline_spec.md, screenshots
 ```
 
 ---
+
+## Security
+
+| Control | How |
+|---|---|
+| Tamper-evident audit | Every agent step and analyst decision is SHA-256 hash-chained; `GET /api/audit/verify/{case_id}` recomputes the chain. |
+| No unverified filings | Approval of an STR is refused (HTTP 409) unless every claim in the report re-checks against the ledger. |
+| Admin token | Set `ADMIN_TOKEN` on the server and replacing the dataset or running an evaluation requires the `X-Admin-Token` header (constant-time comparison). Analysts' read and review actions are unaffected. Enter the token on **Demo controls**; it is kept only for that browser tab. |
+| CORS | `ALLOWED_ORIGINS` (comma-separated). A wildcard origin is never combined with credentials. |
+| HTTP headers | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Permissions-Policy`, and HSTS over HTTPS. |
+| Secrets | The LLM key and admin token come from environment variables only; nothing secret is committed. |
+
+To lock down a deployment: in the backend service's environment, set `ADMIN_TOKEN` to a long random value and `ALLOWED_ORIGINS` to the frontend's URL.
 
 ## Limitations (stated plainly)
 

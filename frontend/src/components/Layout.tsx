@@ -12,16 +12,18 @@ import {
   ExternalLink,
   SlidersHorizontal
 } from 'lucide-react';
-import { apiClient, isOffline, subscribeOffline } from '../api/client';
+import { apiClient, isOffline, subscribeOffline, isWaking, subscribeWaking } from '../api/client';
 
 export const Layout: React.FC = () => {
   const [health, setHealth] = useState<{ status: string; llm_mode: string; groq_model: string } | null>(null);
   const [offline, setOffline] = useState(isOffline());
+  const [waking, setWaking] = useState(isWaking());
 
   useEffect(() => {
+    const unsubscribeWake = subscribeWaking(setWaking);
     const unsubscribe = subscribeOffline(setOffline);
     apiClient.getHealth().then(setHealth).catch(() => setHealth({ status: 'error', llm_mode: 'unknown', groq_model: 'unknown' }));
-    return () => { unsubscribe(); };
+    return () => { unsubscribe(); unsubscribeWake(); };
   }, []);
 
   const engineLabel = offline
@@ -44,7 +46,7 @@ export const Layout: React.FC = () => {
   return (
     <div className="min-h-screen bg-background text-slate-100 flex flex-col">
       {/* Top Navigation Bar */}
-      <header className="h-16 border-b border-slate-800 bg-surface/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-40">
+      <header className="h-16 border-b border-slate-800 bg-surface/90 backdrop-blur-md px-4 md:px-6 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3.5">
           <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
             <ShieldAlert className="h-5 w-5" />
@@ -52,19 +54,20 @@ export const Layout: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-base font-extrabold tracking-tight text-white font-mono">SentinelGraph</span>
-              <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-500/30">
+              <span className="hidden sm:inline text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-500/30">
                 AML Investigation
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">Fact-checked investigations for Indian compliance teams</p>
+            <p className="hidden sm:block text-[11px] text-slate-400">Fact-checked investigations for Indian compliance teams</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
           {/* Health / LLM Status Badge */}
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono">
+            <span className="sm:hidden sr-only">{engineLabel}</span>
             <span className={`h-2 w-2 rounded-full ${!offline && health?.status === 'healthy' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-            <span className="text-slate-300">
+            <span className="hidden sm:inline text-slate-300">
               <strong className="text-indigo-400">{engineLabel}</strong>
             </span>
           </div>
@@ -87,11 +90,28 @@ export const Layout: React.FC = () => {
           snapshot exported from a real run. Actions (investigate, sign-off, evaluation) are disabled until it is back.
         </div>
       )}
-      {!health && !offline && (
-        <div className="px-6 py-2 bg-slate-900 border-b border-slate-800 text-slate-400 text-xs">
-          Connecting to the server… free hosting can take up to a minute to wake up.
+      {(waking || (!health && !offline)) && (
+        <div className="px-6 py-2 bg-indigo-950/60 border-b border-indigo-700/40 text-indigo-200 text-xs flex items-center gap-2">
+          <span className="h-3 w-3 rounded-full border-2 border-indigo-300 border-t-transparent animate-spin" />
+          Waking up the server… free hosting sleeps when idle and can take up to a minute. Live data will appear automatically.
         </div>
       )}
+
+      {/* Mobile navigation */}
+      <nav className="md:hidden flex gap-1 overflow-x-auto px-3 py-2 border-b border-slate-800 bg-surface/70">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === '/'}
+            className={({ isActive }) =>
+              `whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold ${isActive ? 'bg-indigo-600/20 text-indigo-300' : 'text-slate-400'}`
+            }
+          >
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
 
       {/* App Body with Sidebar */}
       <div className="flex-1 flex overflow-hidden">

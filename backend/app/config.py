@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     DECISION_REVIEW_MAX: int = 70
     DECISION_BLOCK_MIN: int = 71
     
+    # Security
+    # When set, destructive or expensive endpoints (replace the dataset, run an evaluation)
+    # require the header `X-Admin-Token: <value>`. Leave unset only for local development.
+    ADMIN_TOKEN: Optional[str] = None
+    # Comma-separated list of browser origins allowed to call the API ("*" = any, no credentials).
+    ALLOWED_ORIGINS: str = "*"
+
     # Investigation parameters
     MAX_INVESTIGATION_LOOPS: int = 2
     EVIDENCE_CONFIDENCE_THRESHOLD: float = 0.65

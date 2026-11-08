@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -30,7 +30,7 @@ import { SarReportViewer } from '../components/SarReportViewer';
 import { FeedbackModal } from '../components/FeedbackModal';
 import { CaseSummary } from '../components/CaseSummary';
 import { FilingBadge } from '../components/FilingBadge';
-import { alertTypeLabel, REVIEW_LABEL } from '../labels';
+import { alertTypeLabel, REVIEW_LABEL, byReviewOrder } from '../labels';
 
 export const InvestigationDetailPage: React.FC = () => {
   const { caseId } = useParams<{ caseId: string }>();
@@ -43,6 +43,29 @@ export const InvestigationDetailPage: React.FC = () => {
   const [approving, setApproving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [chain, setChain] = useState<{ valid: boolean; entries: number; reason?: string } | null>(null);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
+  const [waitingCount, setWaitingCount] = useState<number | null>(null);
+
+  /** Opens the next case in the review queue (unreviewed first, most urgent first). */
+  const goNext = useCallback(async () => {
+    try {
+      const all = await apiClient.getInvestigations({ limit: 200 });
+      const queue = all.filter((c) => c.case_id !== caseId && !c.analyst_review).sort(byReviewOrder);
+      if (queue.length) navigate(`/investigations/${queue[0].case_id}`);
+      else { setSavedMsg('All caught up — no cases waiting for review.'); navigate('/investigations'); }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : String(err));
+    }
+  }, [caseId, navigate]);
+
+  useEffect(() => {
+    setSavedMsg(null);
+    setActionError(null);
+    setView('summary');
+    apiClient.getInvestigations({ limit: 200 })
+      .then((all) => setWaitingCount(all.filter((c) => !c.analyst_review && c.case_id !== caseId).length))
+      .catch(() => setWaitingCount(null));
+  }, [caseId]);
 
   useEffect(() => {
     if (view !== 'details' || activeTab !== 'audit' || !caseId) return;
@@ -58,6 +81,7 @@ export const InvestigationDetailPage: React.FC = () => {
     setActionError(null);
     try {
       await apiClient.submitFeedback(caseId, { feedback_type: 'AGREE', notes: 'Approved the recommendation.', investigator_id: 'analyst' });
+      setSavedMsg('Approved and recorded in the audit chain.');
       await fetchDetail();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
@@ -82,6 +106,21 @@ export const InvestigationDetailPage: React.FC = () => {
   useEffect(() => {
     fetchDetail();
   }, [caseId]);
+
+  // Keyboard shortcuts: A = approve, D = disagree, N = next case.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (feedbackOpen || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+      const k = e.key.toLowerCase();
+      if (k === 'a' && !approving) { e.preventDefault(); approve(); }
+      else if (k === 'd') { e.preventDefault(); setFeedbackOpen(true); }
+      else if (k === 'n') { e.preventDefault(); goNext(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   if (loading) {
     return <div className="p-12 text-center text-slate-400">Loading case…</div>;
@@ -149,14 +188,24 @@ export const InvestigationDetailPage: React.FC = () => {
             >
               <UserCheck className="h-4 w-4" />
               {approving ? 'Saving…' : 'Approve'}
+              <kbd className="ml-1 text-[10px] px-1 rounded bg-emerald-800/70">A</kbd>
             </button>
             <button
               onClick={() => setFeedbackOpen(true)}
               className="px-4 py-2 rounded-xl bg-surface border border-slate-600 hover:border-slate-400 text-slate-200 text-sm font-semibold"
             >
-              Disagree…
+              Disagree… <kbd className="ml-1 text-[10px] px-1 rounded bg-slate-700">D</kbd>
+            </button>
+            <button
+              onClick={goNext}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold"
+              title="Open the next case waiting for review"
+            >
+              Next case → <kbd className="ml-1 text-[10px] px-1 rounded bg-indigo-800/70">N</kbd>
             </button>
           </div>
+          {savedMsg && <p className="text-xs text-emerald-300">{savedMsg} Press <strong>N</strong> for the next case.</p>}
+          {waitingCount !== null && <p className="text-[11px] text-slate-500">{waitingCount} other case{waitingCount === 1 ? '' : 's'} waiting</p>}
           {actionError && <p className="text-xs text-rose-300 max-w-sm md:text-right"><strong>Not saved.</strong> {actionError}</p>}
         </div>
       </div>
@@ -392,7 +441,7 @@ export const InvestigationDetailPage: React.FC = () => {
         filingDecision={report.filing_decision?.decision}
         isOpen={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
-        onSubmitted={fetchDetail}
+        onSubmitted={() => { setSavedMsg('Your decision was recorded in the audit chain.'); fetchDetail(); }}
       />
     </div>
   );

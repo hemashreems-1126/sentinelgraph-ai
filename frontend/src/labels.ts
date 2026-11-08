@@ -44,3 +44,9 @@ export const setPlannerMode = (mode: 'static' | 'adaptive') => {
     /* storage unavailable — the default plan is used */
   }
 };
+
+/** Review queue order used everywhere: unreviewed first, then most urgent, then newest. */
+export const byReviewOrder = <T extends { analyst_review?: string | null; filing_decision?: string | null; filing_tier?: string | null; created_at: string }>(a: T, b: T) =>
+  (a.analyst_review ? 1 : 0) - (b.analyst_review ? 1 : 0) ||
+  urgencyRank(a.filing_decision, a.filing_tier) - urgencyRank(b.filing_decision, b.filing_tier) ||
+  new Date(b.created_at).getTime() - new Date(a.created_at).getTime();

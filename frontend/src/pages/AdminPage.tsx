@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Database, ArrowUpDown, Route, BarChart3 } from 'lucide-react';
-import { apiClient } from '../api/client';
+import { Database, ArrowUpDown, Route, BarChart3, KeyRound } from 'lucide-react';
+import { apiClient, getAdminToken, setAdminToken } from '../api/client';
 import { getPlannerMode, setPlannerMode } from '../labels';
 
 /** Controls for running the demo. Kept off the analyst screens on purpose. */
@@ -10,6 +10,7 @@ export const AdminPage: React.FC = () => {
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [planner, setPlanner] = useState(getPlannerMode());
+  const [token, setToken] = useState(getAdminToken());
 
   const run = async (key: string, action: () => Promise<unknown>, done: string) => {
     setBusy(key);
@@ -44,6 +45,13 @@ export const AdminPage: React.FC = () => {
       </div>
 
       {message && <div className="p-3 rounded-xl border border-slate-700 bg-slate-900 text-sm text-slate-200">{message}</div>}
+
+      {card(<KeyRound className="h-5 w-5" />, 'Admin token',
+        <>If the server has <code className="text-indigo-300">ADMIN_TOKEN</code> set, enter it here to generate data or run evaluations.
+          Kept only for this browser tab and never shown again.</>,
+        <input type="password" value={token} placeholder="Admin token" autoComplete="off"
+          onChange={(e) => { setToken(e.target.value); setAdminToken(e.target.value); }}
+          className="px-3 py-2 bg-background border border-slate-700 rounded-xl text-xs text-slate-200 w-48" />)}
 
       {card(<Database className="h-5 w-5" />, 'Generate a new synthetic dataset',
         <>Creates a fresh INR ledger with laundering patterns and legitimate look-alikes, then runs monitoring.

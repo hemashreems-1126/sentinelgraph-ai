@@ -2,6 +2,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db.session import get_db
+from app.security import require_admin
 from app.db.models import EvaluationMetricRecord
 from app.schemas.eval import EvaluationMetricsResponse, EvaluationTriggerRequest
 from app.utils.evaluation_runner import evaluation_runner
@@ -28,7 +29,7 @@ def get_evaluation_history(
     return db.query(EvaluationMetricRecord).order_by(EvaluationMetricRecord.timestamp.desc()).limit(limit).all()
 
 
-@router.post("/run", response_model=EvaluationMetricsResponse)
+@router.post("/run", response_model=EvaluationMetricsResponse, dependencies=[Depends(require_admin)])
 def trigger_evaluation(
     req: EvaluationTriggerRequest,
     db: Session = Depends(get_db)

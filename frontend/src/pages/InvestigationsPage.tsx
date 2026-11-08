@@ -4,7 +4,7 @@ import { Search, FolderSearch, ChevronRight, ShieldCheck, ShieldAlert, RefreshCw
 import { apiClient } from '../api/client';
 import { InvestigationCaseSummary } from '../types';
 import { FilingBadge } from '../components/FilingBadge';
-import { REVIEW_LABEL, urgencyRank } from '../labels';
+import { REVIEW_LABEL, byReviewOrder } from '../labels';
 
 /** The analyst's inbox: most urgent first, one line per case saying who, what and why. */
 export const InvestigationsPage: React.FC = () => {
@@ -35,11 +35,7 @@ export const InvestigationsPage: React.FC = () => {
     .filter((c) => !decisionFilter || c.filing_decision === decisionFilter)
     .filter((c) => !reviewFilter || (reviewFilter === 'todo' ? !c.analyst_review : !!c.analyst_review))
     .filter((c) => !q || [c.subject_name, c.case_id, c.alert_id, c.headline].some((v) => (v || '').toLowerCase().includes(q)))
-    .sort((a, b) =>
-      (a.analyst_review ? 1 : 0) - (b.analyst_review ? 1 : 0) ||
-      urgencyRank(a.filing_decision, a.filing_tier) - urgencyRank(b.filing_decision, b.filing_tier) ||
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    );
+    .sort(byReviewOrder);
   const todo = cases.filter((c) => !c.analyst_review).length;
 
   return (
@@ -51,9 +47,19 @@ export const InvestigationsPage: React.FC = () => {
             {todo} waiting for your review · most urgent first. Open a case to approve or disagree.
           </p>
         </div>
-        <button onClick={load} className="self-start md:self-auto px-3 py-2 rounded-xl bg-surface border border-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5">
+        <div className="flex items-center gap-2 self-start md:self-auto">
+        {todo > 0 && (
+          <button
+            onClick={() => { const first = [...cases].sort(byReviewOrder)[0]; if (first) navigate(`/investigations/${first.case_id}`); }}
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold"
+          >
+            Start reviewing ({todo} waiting) →
+          </button>
+        )}
+        <button onClick={load} className=" px-3 py-2 rounded-xl bg-surface border border-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5">
           <RefreshCw className="h-3.5 w-3.5" /> Refresh
         </button>
+        </div>
       </div>
 
       <div className="p-3 rounded-2xl bg-surface border border-slate-800 flex flex-wrap items-center gap-3">
