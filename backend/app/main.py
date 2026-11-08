@@ -1,3 +1,4 @@
+from fastapi.responses import JSONResponse
 import logging
 import os
 import sys
@@ -8,9 +9,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.security import SecurityHeadersMiddleware, cors_settings
 from app.config import settings
 from app.db.session import init_db
-from app.services.seed import auto_seed_initial_data
+from app.services.seed import auto_seed_initial_data, start_background_seed, seed_state
 from app.api.router import api_router
 
 logging.basicConfig(
@@ -26,7 +28,10 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database tables verified / initialized.")
     # Auto-seed sample ledger, prioritized alerts, investigations & evaluations if DB is empty
-    auto_seed_initial_data()
+    if settings.SEED_IN_BACKGROUND:
+        start_background_seed()
+    else:
+        auto_seed_initial_data()
     yield
     logger.info(f"Shutting down {settings.PROJECT_NAME}...")
 
@@ -34,18 +39,28 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="SentinelGraph — Multi-Agent Financial Crime Alert Investigation Platform",
+    description="SentinelGraph — fact-checked AML investigation assistant",
     lifespan=lifespan
 )
 
 # Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+
+@app.middleware("http")
+async def warming_up_guard(request, call_next):
+    """While the demo data is still being created, data routes answer 503 + Retry-After.
+    The web app treats that as "server waking up" and retries, instead of showing zeros."""
+    path = request.url.path
+    if (not seed_state["ready"] and path.startswith(settings.API_PREFIX)
+            and not path.startswith(f"{settings.API_PREFIX}/health") and request.method != "OPTIONS"):
+        return JSONResponse({"detail": "The server is preparing its demo data. Try again in a few seconds."},
+                            status_code=503, headers={"Retry-After": "5"})
+    return await call_next(request)
+
+
+# Added last = outermost, so CORS and security headers also apply to the 503 above.
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CORSMiddleware, **cors_settings())
 
 # Mount API routers
 app.include_router(api_router, prefix=settings.API_PREFIX)

@@ -31,6 +31,37 @@ const getBaseUrl = () => {
 // Free hosting tiers can take ~50s to wake up, so reads get a generous timeout.
 const api = axios.create({ baseURL: getBaseUrl(), timeout: 60000, headers: { 'Content-Type': 'application/json' } });
 
+// ---------------- admin token (optional; protects dataset reset and evaluation runs) ----------------
+const ADMIN_KEY = 'sg.adminToken';
+export const getAdminToken = (): string => {
+  try { return sessionStorage.getItem(ADMIN_KEY) ?? ''; } catch { return ''; }
+};
+export const setAdminToken = (token: string) => {
+  try { token ? sessionStorage.setItem(ADMIN_KEY, token) : sessionStorage.removeItem(ADMIN_KEY); } catch { /* storage blocked */ }
+};
+api.interceptors.request.use((config) => {
+  const token = getAdminToken();
+  if (token) config.headers.set('X-Admin-Token', token);
+  return config;
+});
+
+// ---------------- waking state (free hosting sleeps when idle) ----------------
+let waking = false;
+const wakeListeners = new Set<(waking: boolean) => void>();
+const setWaking = (value: boolean) => {
+  if (waking !== value) {
+    waking = value;
+    wakeListeners.forEach((l) => l(value));
+  }
+};
+export const isWaking = () => waking;
+export const subscribeWaking = (cb: (waking: boolean) => void) => {
+  wakeListeners.add(cb);
+  return () => wakeListeners.delete(cb);
+};
+const WAKE_BUDGET_MS = 180000;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 // ---------------- offline state ----------------
 let offline = false;
 const listeners = new Set<(offline: boolean) => void>();
@@ -71,16 +102,27 @@ let snapshotPromise: Promise<Record<string, any>> | null = null;
 const loadSnapshot = () => (snapshotPromise ??= import('./offlineSnapshot').then((m) => m.OFFLINE_SNAPSHOT));
 
 async function read<T>(call: () => Promise<{ data: T }>, fallback: (snap: Record<string, any>) => T): Promise<T> {
-  try {
-    const res = await call();
-    setOffline(false);
-    return res.data;
-  } catch (err) {
-    if (isUnreachable(err)) {
-      setOffline(true);
-      return fallback(await loadSnapshot());
+  const started = Date.now();
+  // While the server is waking up, keep retrying for up to 90s before showing offline data.
+  for (;;) {
+    try {
+      const res = await call();
+      setWaking(false);
+      setOffline(false);
+      return res.data;
+    } catch (err) {
+      if (!isUnreachable(err)) {
+        setWaking(false);
+        throw toError(err);
+      }
+      if (offline || Date.now() - started > WAKE_BUDGET_MS) {
+        setWaking(false);
+        setOffline(true);
+        return fallback(await loadSnapshot());
+      }
+      setWaking(true);
+      await sleep(4000);
     }
-    throw toError(err);
   }
 }
 

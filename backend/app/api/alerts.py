@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db.session import get_db
+from app.security import require_admin
 from app.db.models import Alert, Transaction, Customer, InvestigationCase
 from app.schemas.alert import AlertResponse, AlertGenerateRequest, AlertPrioritizeRequest
 from app.services.data_generator import SyntheticAMLDataGenerator
@@ -85,7 +86,7 @@ def get_alert(alert_id: str, db: Session = Depends(get_db)):
     return alt
 
 
-@router.post("/generate")
+@router.post("/generate", dependencies=[Depends(require_admin)])
 def generate_synthetic_alerts(
     req: AlertGenerateRequest,
     db: Session = Depends(get_db)

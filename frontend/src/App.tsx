@@ -7,6 +7,7 @@ import { InvestigationsPage } from './pages/InvestigationsPage';
 import { InvestigationDetailPage } from './pages/InvestigationDetailPage';
 import { AuditLogPage } from './pages/AuditLogPage';
 import { EvaluationPage } from './pages/EvaluationPage';
+import { AdminPage } from './pages/AdminPage';
 
 export const App: React.FC = () => {
   return (
@@ -19,6 +20,7 @@ export const App: React.FC = () => {
           <Route path="investigations/:caseId" element={<InvestigationDetailPage />} />
           <Route path="audit" element={<AuditLogPage />} />
           <Route path="evaluation" element={<EvaluationPage />} />
+          <Route path="admin" element={<AdminPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -81,6 +81,9 @@ class InvestigationCaseSummaryResponse(BaseModel):
     filing_decision: Optional[str] = None
     filing_tier: Optional[str] = None
     report_status: Optional[str] = None
+    subject_name: Optional[str] = None
+    headline: Optional[str] = None
+    analyst_review: Optional[str] = None
     decision_rationale: Optional[str]
     created_at: datetime.datetime
     completed_at: Optional[datetime.datetime]

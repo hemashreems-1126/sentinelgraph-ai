@@ -19,6 +19,7 @@ sys.path.insert(0, BACKEND)
 
 tmp = os.path.join(tempfile.mkdtemp(), "snapshot.db")
 os.environ["DATABASE_URL"] = f"sqlite:///{tmp}"
+os.environ["SEED_IN_BACKGROUND"] = "false"
 
 from fastapi.testclient import TestClient  # noqa: E402
 from app.main import app  # noqa: E402
